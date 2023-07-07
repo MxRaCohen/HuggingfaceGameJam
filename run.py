@@ -1,3 +1,5 @@
+# CURRENT WORKING VERSION 
+
 import pygame
 import random
 
@@ -41,6 +43,12 @@ def circles_collide(circle1_pos, circle2_pos):
 
 def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
+def restart_game():
+    global circle_positions, circle_destinations, circle_colors, action_points
+    circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
+    circle_destinations = list(circle_positions)
+    circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]
+    action_points = 5
 
 while running:
     for event in pygame.event.get():
@@ -93,7 +101,7 @@ while running:
         pygame.draw.circle(screen, circle_colors[i], circle_positions[i], circle_radius)
         
     if action_points == 0:
-        message = font.render("You are out of moves!", True, pygame.Color("white"))
+        message = font.render("You are out of moves! Press R to restart", True, pygame.Color("white"))
         message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
         screen.blit(message, message_rect)
 
@@ -105,5 +113,8 @@ while running:
     pygame.display.flip()
 
     dt = clock.tick(60) / 1000
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_r]:
+        restart_game()
 
 pygame.quit()
