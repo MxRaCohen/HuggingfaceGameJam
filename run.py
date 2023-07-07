@@ -91,6 +91,7 @@ while running:
                     current_circle = i
                     dragging = True
                     break  # Stop checking after a circle is found
+                current_circle = None
 
         elif event.type == pygame.MOUSEBUTTONUP:
             dragging = False
