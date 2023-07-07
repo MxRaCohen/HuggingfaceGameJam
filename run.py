@@ -7,6 +7,7 @@ pygame.init()
 screen_height = 720
 screen_width = 1280
 circle_scale = 1
+level = 0
 speed = 2000  # Speed of the circles
 is_playing_sound = False
 
@@ -28,6 +29,23 @@ action_points = starting_action_points  # Set the desired number of action point
 on_click_sounds = list()
 for i in range(1, 10):
     on_click_sounds.append(pygame.mixer.Sound("sounds/clicks/space shield sounds - {}.wav".format(i)))
+
+level_up_music = pygame.mixer.Sound("sounds/level_up.wav")
+
+
+# Load level music
+level_music = {
+    0 : 'sounds/levels/WheresMySpaceship.wav',
+    1 : 'sounds/levels/SpaceTheme.wav',
+    2 : 'sounds/levels/FallingStars.wav',
+    3 : 'sounds/levels/ThroughSpace.wav',
+    4 : 'sounds/levels/Planetrise.wav',
+    5 : 'sounds/levels/FrozenJam.wav',
+    6 : 'sounds/levels/SpaceSprinkles.mp3',
+    7 : 'sounds/levels/TowerDefenseTheme.mp3',
+    8 : 'sounds/levels/HangInThere.mp3',
+    9 : 'sounds/levels/MagicSpace.mp3',
+}
 
 # Twice the radius to prevent overlapping
 min_distance = circle_radius * 2  
@@ -113,6 +131,24 @@ def is_solved():
 
     return cluster_colors_match
 
+def level_up():
+    global circle_scale, level, level_music, level_up_music, is_playing_sound
+    circle_scale *= 0.5  # Set circle_scale to 0.5 if is_solved is True
+    level += 1
+
+    # Stop music, play level-up, start new level music
+    pygame.mixer.music.stop()
+    pygame.mixer.Sound.play(level_up_music)
+    pygame.mixer.Sound.fadeout(level_up_music, 100)
+    if level > 8:
+       pygame.mixer.music.load(level_music[9])
+    else:
+       pygame.mixer.music.load(level_music[level])
+
+    pygame.mixer.music.play(-1)
+    is_playing_sound = True
+
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -138,7 +174,7 @@ while running:
                 action_points -= 1
 
                 if is_solved():
-                    circle_scale = 0.5  # Set circle_scale to 0.5 if is_solved is True              
+                    level_up()
 
         elif event.type == pygame.MOUSEMOTION:
             if dragging and current_circle is not None:
@@ -156,7 +192,9 @@ while running:
         if keys[pygame.K_SPACE]:
             game_state = "game"
             pygame.mixer.music.stop()
-            is_playing_sound = False
+            pygame.mixer.music.load(level_music[0])
+            pygame.mixer.music.play(-1)
+            is_playing_sound = True
             restart_game()
             game_over = False
 
