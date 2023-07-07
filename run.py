@@ -4,10 +4,17 @@ import pygame
 import random
 
 pygame.init()
-screen = pygame.display.set_mode((1280, 720))
+screen_height = 720
+screen_width = 1280
+
+screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 running = True
 dt = 0
+
+# Define start screen state
+game_state = "start_menu"
+game_over = False
 
 # Number of circles
 num_circles = 20
@@ -43,6 +50,7 @@ def circles_collide(circle1_pos, circle2_pos):
 
 def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
+
 def restart_game():
     global circle_positions, circle_destinations, circle_colors, action_points
     circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
@@ -50,10 +58,31 @@ def restart_game():
     circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]
     action_points = 5
 
+def draw_start_screen():
+    screen.fill((0, 0, 0))
+    font = pygame.font.SysFont('arial', 40)
+    title = font.render('Hugging Face Game Jam', True, (255, 255, 255))
+    start_button = font.render('Press Space to Start', True, (255, 255, 255))
+    screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/2))
+    screen.blit(start_button, (screen_width/2 - start_button.get_width()/2, screen_height/2 + start_button.get_height()/2))
+    pygame.display.update()
+
+def draw_game_over_screen():
+   screen.fill((0, 0, 0))
+   font = pygame.font.SysFont('arial', 40)
+   title = font.render('Game Over', True, (255, 255, 255))
+   restart_button = font.render('R - Restart', True, (255, 255, 255))
+   quit_button = font.render('Q - Quit', True, (255, 255, 255))
+   screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/3))
+   screen.blit(restart_button, (screen_width/2 - restart_button.get_width()/2, screen_height/1.9 + restart_button.get_height()))
+   screen.blit(quit_button, (screen_width/2 - quit_button.get_width()/2, screen_height/2 + quit_button.get_height()/2))
+   pygame.display.update()
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
             click_pos = pygame.Vector2(pygame.mouse.get_pos())
 
@@ -78,43 +107,61 @@ while running:
                 )
                 circle_destinations[current_circle] = constrained_pos
 
-    screen.fill("black")
+    if game_state == "start_menu":
+        draw_start_screen()
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE]:
+            game_state = "game"
+            game_over = False
 
-    # Move all circles towards their destinations
-    for i in range(num_circles):
-        if circle_positions[i] != circle_destinations[i]:
-            direction = (circle_destinations[i] - circle_positions[i]).normalize()
-            if (circle_destinations[i] - circle_positions[i]).length() <= speed * dt:
-                circle_positions[i] = circle_destinations[i]
-            else:
-                circle_positions[i] += direction * speed * dt
+    if game_over:
+       draw_game_over_screen()
+       keys = pygame.key.get_pressed()
+       if keys[pygame.K_r]:
+           game_state = "start_menu"
+           game_over = False
+           action_points = 5
+       if keys[pygame.K_q]:
+           pygame.quit()
+           quit()
 
-        # Check for collisions with other circles
-        for j in range(num_circles):
-            if i != j and circles_collide(circle_positions[i], circle_positions[j]):
-                # Adjust the position of circle i if it collides with circle j
-                displacement = (circle_positions[i] - circle_positions[j]).normalize() * min_distance
-                circle_positions[i] = circle_positions[j] + displacement
+    elif game_state == "game":
 
-    # Draw all circles with their assigned colors
-    for i in range(num_circles):
-        pygame.draw.circle(screen, circle_colors[i], circle_positions[i], circle_radius)
-        
-    if action_points == 0:
-        message = font.render("You are out of moves! Press R to restart", True, pygame.Color("white"))
-        message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
-        screen.blit(message, message_rect)
+        screen.fill("black")
 
-    # Display action points
-    font = pygame.font.SysFont(None, 36)
-    text = font.render(f"Actions: {action_points}", True, pygame.Color("white"))
-    screen.blit(text, (10, 10))
+        # Move all circles towards their destinations
+        for i in range(num_circles):
+            if circle_positions[i] != circle_destinations[i]:
+                direction = (circle_destinations[i] - circle_positions[i]).normalize()
+                if (circle_destinations[i] - circle_positions[i]).length() <= speed * dt:
+                    circle_positions[i] = circle_destinations[i]
+                else:
+                    circle_positions[i] += direction * speed * dt
 
-    pygame.display.flip()
+            # Check for collisions with other circles
+            for j in range(num_circles):
+                if i != j and circles_collide(circle_positions[i], circle_positions[j]):
+                    # Adjust the position of circle i if it collides with circle j
+                    displacement = (circle_positions[i] - circle_positions[j]).normalize() * min_distance
+                    circle_positions[i] = circle_positions[j] + displacement
 
-    dt = clock.tick(60) / 1000
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_r]:
-        restart_game()
+        # Draw all circles with their assigned colors
+        for i in range(num_circles):
+            pygame.draw.circle(screen, circle_colors[i], circle_positions[i], circle_radius)
+            
+        if action_points == 0:
+            game_over = True
+
+        # Display action points
+        font = pygame.font.SysFont(None, 36)
+        text = font.render(f"Actions: {action_points}", True, pygame.Color("white"))
+        screen.blit(text, (10, 10))
+
+        pygame.display.flip()
+
+        dt = clock.tick(60) / 1000
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_r]:
+            restart_game()
 
 pygame.quit()
