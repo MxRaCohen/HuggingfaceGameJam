@@ -59,6 +59,7 @@ def restart_game():
     circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]
     action_points = 5
     circle_scale = 1  # Reset circle_scale to 1
+    min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
 
     
 
@@ -174,6 +175,7 @@ while running:
         for i in range(num_circles):
             scaled_radius = int(circle_radius * circle_scale)
             pygame.draw.circle(screen, circle_colors[i], circle_positions[i], scaled_radius)
+            min_distance = circle_radius * 2 * circle_scale 
             
         if action_points == 0:
             game_over = True
