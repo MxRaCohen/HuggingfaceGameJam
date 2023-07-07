@@ -24,6 +24,11 @@ game_state = "start_menu"
 game_over = False
 action_points = starting_action_points  # Set the desired number of action points
 
+# Load on click sounds
+on_click_sounds = list()
+for i in range(1, 10):
+    on_click_sounds.append(pygame.mixer.Sound("sounds/clicks/space shield sounds - {}.wav".format(i)))
+
 # Twice the radius to prevent overlapping
 min_distance = circle_radius * 2  
 
@@ -35,8 +40,6 @@ spawn_range_y = screen.get_height() - circle_radius * 2
 circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
 circle_destinations = list(circle_positions)  # Start destinations as the initial positions
 circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]  # Assign random colors
-
-
 
 # Variable to store which circle is currently being controlled
 current_circle = None
@@ -122,6 +125,11 @@ while running:
                 if is_point_in_circle(click_pos, circle_positions[i], circle_radius):
                     current_circle = i
                     dragging = True
+
+                    # Pick a sound and play it
+                    music_idx = i % 9 
+                    pygame.mixer.Sound.play(on_click_sounds[music_idx])
+
                     break  # Stop checking after a circle is found
                 current_circle = None
         elif event.type == pygame.MOUSEBUTTONUP:
