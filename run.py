@@ -113,18 +113,19 @@ while running:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
             game_state = "game"
+            restart_game()
             game_over = False
 
     if game_over:
-       draw_game_over_screen()
-       keys = pygame.key.get_pressed()
-       if keys[pygame.K_r]:
-           game_state = "start_menu"
-           game_over = False
-           action_points = 5
-       if keys[pygame.K_q]:
-           pygame.quit()
-           quit()
+        draw_game_over_screen()
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_r]:
+            game_state = "start_menu"
+            game_over = False
+            action_points = 5
+        if keys[pygame.K_q]:
+            pygame.quit()
+            quit()
 
     elif game_state == "game":
 
