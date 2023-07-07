@@ -62,6 +62,7 @@ while running:
                     current_circle = i
                     dragging = True
                     break  # Stop checking after a circle is found
+                current_circle = None
 
         elif event.type == pygame.MOUSEBUTTONUP:
             dragging = False
@@ -104,6 +105,8 @@ while running:
         message = font.render("You are out of moves! Press R to restart", True, pygame.Color("white"))
         message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
         screen.blit(message, message_rect)
+        if keys[pygame.K_r]:
+            restart_game()
 
     # Display action points
     font = pygame.font.SysFont(None, 36)
@@ -114,7 +117,7 @@ while running:
 
     dt = clock.tick(60) / 1000
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_r]:
-        restart_game()
+#     if keys[pygame.K_r]:
+#         restart_game()
 
 pygame.quit()
