@@ -6,12 +6,12 @@ from sklearn.cluster import KMeans
 pygame.init()
 screen_height = 720
 screen_width = 1280
+circle_scale = 1
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 running = True
 dt = 0
-circle_scale = 1
 # Define start screen state
 game_state = "start_menu"
 game_over = False
@@ -52,11 +52,15 @@ def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
 
 def restart_game():
-    global circle_positions, circle_destinations, circle_colors, action_points
+    
+    global circle_positions, circle_destinations, circle_colors, action_points, circle_scale
     circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
     circle_destinations = list(circle_positions)
     circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]
     action_points = 5
+    circle_scale = 1  # Reset circle_scale to 1
+
+    
 
 def draw_start_screen():
     screen.fill((0, 0, 0))
@@ -79,7 +83,7 @@ def draw_game_over_screen():
    pygame.display.update()
 
 def is_solved():
-    kmeans = KMeans(n_clusters=3)  # Change the number of clusters as needed
+    kmeans = KMeans(n_clusters=3, n_init=10)  # Change the number of clusters as needed
     kmeans.fit([list(circle_positions[i]) for i in range(num_circles)])
 
     # Check if each cluster contains circles of the same color
