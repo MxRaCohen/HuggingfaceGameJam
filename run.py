@@ -7,21 +7,24 @@ pygame.init()
 screen_height = 720
 screen_width = 1280
 circle_scale = 1
+speed = 2000  # Speed of the circles
+
+starting_action_points = 5
+num_circles = 5  # Circles on start
+circle_radius = 40  # Circle radius and minimum distance between circles
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
+
 running = True
 dt = 0
 # Define start screen state
 game_state = "start_menu"
 game_over = False
+action_points = starting_action_points  # Set the desired number of action points
 
-# Number of circles
-num_circles = 5
-
-# Circle radius and minimum distance between circles
-circle_radius = 40
-min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
+# Twice the radius to prevent overlapping
+min_distance = circle_radius * 2  
 
 # Calculate the valid range for circle spawning
 spawn_range_x = screen.get_width() - circle_radius * 2
@@ -32,15 +35,12 @@ circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x),
 circle_destinations = list(circle_positions)  # Start destinations as the initial positions
 circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]  # Assign random colors
 
-# Speed of the circles
-speed = 2000
+
 
 # Variable to store which circle is currently being controlled
 current_circle = None
 dragging = False
 
-# Action point variable
-action_points = 5  # Set the desired number of action points
 
 def is_point_in_circle(point, circle_center, circle_radius):
     return (point - circle_center).length() <= circle_radius
@@ -57,12 +57,10 @@ def restart_game():
     circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
     circle_destinations = list(circle_positions)
     circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]
-    action_points = 5
+    action_points = starting_action_points
     circle_scale = 1  # Reset circle_scale to 1
     min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
-
     
-
 def draw_start_screen():
     screen.fill((0, 0, 0))
     font = pygame.font.SysFont('arial', 40)
@@ -118,9 +116,7 @@ while running:
                 action_points -= 1
 
                 if is_solved():
-                    circle_scale = 0.5  # Set circle_scale to 0.5 if is_solved is True
-
-                    
+                    circle_scale = 0.5  # Set circle_scale to 0.5 if is_solved is True              
 
         elif event.type == pygame.MOUSEMOTION:
             if dragging and current_circle is not None:
