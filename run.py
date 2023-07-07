@@ -14,13 +14,17 @@ num_circles = 20
 circle_radius = 40
 min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
 
+# Calculate the valid range for circle spawning
+spawn_range_x = screen.get_width() - circle_radius * 2
+spawn_range_y = screen.get_height() - circle_radius * 2
+
 # List of circle positions, their destinations, and their colors
-circle_positions = [pygame.Vector2(random.randint(0, screen.get_width()), random.randint(0, screen.get_height())) for _ in range(num_circles)]
+circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
 circle_destinations = list(circle_positions)  # Start destinations as the initial positions
 circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]  # Assign random colors
 
 # Speed of the circles
-speed = 2000
+speed = 300
 
 # Variable to store which circle is currently being controlled
 current_circle = None
@@ -31,6 +35,9 @@ def is_point_in_circle(point, circle_center, circle_radius):
 
 def circles_collide(circle1_pos, circle2_pos):
     return (circle1_pos - circle2_pos).length() < min_distance
+
+def clamp(value, min_value, max_value):
+    return max(min(value, max_value), min_value)
 
 while running:
     for event in pygame.event.get():
@@ -50,7 +57,13 @@ while running:
 
         elif event.type == pygame.MOUSEMOTION:
             if dragging and current_circle is not None:
-                circle_destinations[current_circle] = pygame.Vector2(pygame.mouse.get_pos())
+                mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
+                # Constrain the mouse position within the screen boundaries
+                constrained_pos = pygame.Vector2(
+                    clamp(mouse_pos.x, circle_radius, screen.get_width() - circle_radius),
+                    clamp(mouse_pos.y, circle_radius, screen.get_height() - circle_radius)
+                )
+                circle_destinations[current_circle] = constrained_pos
 
     screen.fill("black")
 
