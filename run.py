@@ -8,6 +8,7 @@ screen_height = 720
 screen_width = 1280
 circle_scale = 1
 speed = 2000  # Speed of the circles
+is_playing_sound = False
 
 starting_action_points = 5
 num_circles = 5  # Circles on start
@@ -52,7 +53,6 @@ def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
 
 def restart_game():
-    
     global circle_positions, circle_destinations, circle_colors, action_points, circle_scale
     circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
     circle_destinations = list(circle_positions)
@@ -62,15 +62,23 @@ def restart_game():
     min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
     
 def draw_start_screen():
+    global is_playing_sound
     screen.fill((0, 0, 0))
     font = pygame.font.SysFont('arial', 40)
     title = font.render('Hugging Face Game Jam', True, (255, 255, 255))
     start_button = font.render('Press Space to Start', True, (255, 255, 255))
     screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/2))
     screen.blit(start_button, (screen_width/2 - start_button.get_width()/2, screen_height/2 + start_button.get_height()/2))
+    
+    if not is_playing_sound:
+        pygame.mixer.music.load('sounds/start_menu.wav')
+        pygame.mixer.music.play(-1)
+        is_playing_sound = True
+
     pygame.display.update()
 
 def draw_game_over_screen():
+   global is_playing_sound
    screen.fill((0, 0, 0))
    font = pygame.font.SysFont('arial', 40)
    title = font.render('Game Over', True, (255, 255, 255))
@@ -79,6 +87,12 @@ def draw_game_over_screen():
    screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/3))
    screen.blit(restart_button, (screen_width/2 - restart_button.get_width()/2, screen_height/1.9 + restart_button.get_height()))
    screen.blit(quit_button, (screen_width/2 - quit_button.get_width()/2, screen_height/2 + quit_button.get_height()/2))
+
+   if not is_playing_sound:
+       pygame.mixer.music.load('sounds/end_game.wav')
+       pygame.mixer.music.play(-1)
+       is_playing_sound = True
+
    pygame.display.update()
 
 def is_solved():
@@ -133,8 +147,11 @@ while running:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
             game_state = "game"
+            pygame.mixer.music.stop()
+            is_playing_sound = False
             restart_game()
             game_over = False
+
 
     if game_over:
         draw_game_over_screen()
@@ -142,7 +159,7 @@ while running:
         if keys[pygame.K_r]:
             game_state = "start_menu"
             game_over = False
-            action_points = 5
+            action_points = starting_action_points
         if keys[pygame.K_q]:
             pygame.quit()
             quit()
