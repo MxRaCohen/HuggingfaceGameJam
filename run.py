@@ -1,7 +1,7 @@
 # CURRENT WORKING VERSION 
-
 import pygame
 import random
+from sklearn.cluster import KMeans
 
 pygame.init()
 screen_height = 720
@@ -11,13 +11,13 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 running = True
 dt = 0
-
+circle_scale = 1
 # Define start screen state
 game_state = "start_menu"
 game_over = False
 
 # Number of circles
-num_circles = 20
+num_circles = 5
 
 # Circle radius and minimum distance between circles
 circle_radius = 40
@@ -78,6 +78,21 @@ def draw_game_over_screen():
    screen.blit(quit_button, (screen_width/2 - quit_button.get_width()/2, screen_height/2 + quit_button.get_height()/2))
    pygame.display.update()
 
+def is_solved():
+    kmeans = KMeans(n_clusters=3)  # Change the number of clusters as needed
+    kmeans.fit([list(circle_positions[i]) for i in range(num_circles)])
+
+    # Check if each cluster contains circles of the same color
+    cluster_colors_match = True
+    for cluster_label in range(3):  # Assuming 3 clusters for this example
+        cluster_indices = [i for i in range(num_circles) if kmeans.labels_[i] == cluster_label]
+        cluster_colors_set = set([circle_colors[i] for i in cluster_indices])
+        if len(cluster_colors_set) > 1:
+            cluster_colors_match = False
+            break
+
+    return cluster_colors_match
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -92,11 +107,15 @@ while running:
                     dragging = True
                     break  # Stop checking after a circle is found
                 current_circle = None
-
         elif event.type == pygame.MOUSEBUTTONUP:
             dragging = False
             if current_circle is not None and action_points > 0:
                 action_points -= 1
+
+                if is_solved():
+                    circle_scale = 0.5  # Set circle_scale to 0.5 if is_solved is True
+
+                    
 
         elif event.type == pygame.MOUSEMOTION:
             if dragging and current_circle is not None:
@@ -149,7 +168,8 @@ while running:
 
         # Draw all circles with their assigned colors
         for i in range(num_circles):
-            pygame.draw.circle(screen, circle_colors[i], circle_positions[i], circle_radius)
+            scaled_radius = int(circle_radius * circle_scale)
+            pygame.draw.circle(screen, circle_colors[i], circle_positions[i], scaled_radius)
             
         if action_points == 0:
             game_over = True
