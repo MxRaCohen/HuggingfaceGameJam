@@ -430,12 +430,13 @@ while running:
                     # Pick a sound and play it
                     music_idx = i % 9 
                     pygame.mixer.Sound.play(on_click_sounds[music_idx])
+                    
 
                     break  # Stop checking after a circle is found
-                current_circle = None
+                last_circle = current_circle
         elif event.type == pygame.MOUSEBUTTONUP:
             dragging = False
-            if current_circle is not None and action_points > 0:
+            if current_circle != last_circle and action_points > 0:
                 action_points -= 1
 
                 if is_solved():
