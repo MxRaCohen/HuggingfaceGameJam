@@ -14,6 +14,7 @@ speed = 2000  # Speed of the circles
 is_playing_sound = False
 track_selected = False
 color_counts = {'red': 0, 'blue': 0, 'green': 0}
+sound_muted = False
 
 starting_action_points = 5
 init_circles = 5  # Circles on start
@@ -81,6 +82,10 @@ level_music = {
     8 : 'sounds/levels/HangInThere.mp3',
     9 : 'sounds/levels/MagicSpace.mp3',
 }
+
+# Load mute/unmute button icons
+mute_button_img = pygame.image.load('icons/mute_button.jpg')
+unmute_button_img = pygame.image.load('icons/unmute_button.jpg')
 
 # Twice the radius to prevent overlapping
 min_distance = circle_radius * 2  
@@ -279,15 +284,22 @@ def level_up():
     pygame.mixer.music.play(-1)
     is_playing_sound = False
 
-
+def mute_unmute_sound():
+    global sound_muted
+    sound_muted = not sound_muted
+    pygame.mixer.music.set_volume(0 if sound_muted else 1)
 
 while running:
+    mute_button_pos = pygame.Rect(20, 650, 40, 40)
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             click_pos = pygame.Vector2(pygame.mouse.get_pos())
+            if mute_button_pos.collidepoint(click_pos.x, click_pos.y):
+                mute_unmute_sound()
 
             for i in range(num_circles):
                 if is_point_in_circle(click_pos, circle_positions[i], circle_radius):
@@ -356,7 +368,11 @@ while running:
             
         if action_points == 0:
             game_over = True
-
+        if sound_muted:
+            screen.blit(mute_button_img, mute_button_pos)
+        else:
+            screen.blit(unmute_button_img, mute_button_pos)
+            
         # Display action points
         font = pygame.font.SysFont(None, 36)
         ap_text = font.render(f"Actions: {action_points}", True, pygame.Color("white"))
