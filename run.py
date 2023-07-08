@@ -3,6 +3,7 @@ import pygame
 import random
 from sklearn.cluster import KMeans
 import shelve
+import math
 
 pygame.init()
 screen_height = 720
@@ -12,6 +13,7 @@ level = 0
 speed = 2000  # Speed of the circles
 is_playing_sound = False
 track_selected = False
+color_counts = {'red': 0, 'blue': 0, 'green': 0}
 
 starting_action_points = 5
 init_circles = 5  # Circles on start
@@ -87,10 +89,30 @@ min_distance = circle_radius * 2
 spawn_range_x = screen.get_width() - circle_radius * 2
 spawn_range_y = screen.get_height() - circle_radius * 2
 
+def normal_distribution(x, mean=0, standard_deviation=1):
+    """Return the value of the normal distribution function at x."""
+    return 1 / (standard_deviation * (2 * math.pi) ** 0.5) * math.exp(-0.5 * ((x - mean) / standard_deviation) ** 2)
+
+def pick_color():
+    """Pick a color with probability proportional to the negative of its count."""
+    global color_counts
+    
+    # Compute scores for each color
+    total_count = sum(color_counts.values())
+    color_scores = {color: normal_distribution(count / total_count if total_count else 0) for color, count in color_counts.items()}
+
+    # Pick color with highest score
+    selected_color = max(color_scores, key=color_scores.get)
+    
+    # Update color count
+    color_counts[selected_color] += 1
+    
+    return selected_color
+
 # List of circle positions, their destinations, and their colors
 circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
 circle_destinations = list(circle_positions)  # Start destinations as the initial positions
-circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]  # Assign random colors
+circle_colors = [(pick_color()) for _ in range(num_circles)]  # Assign random colors
 
 # Variable to store which circle is currently being controlled
 current_circle = None
@@ -111,7 +133,7 @@ def restart_game():
     num_circles = init_circles
     circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
     circle_destinations = list(circle_positions)
-    circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]
+    circle_colors = [(pick_color()) for _ in range(num_circles)]
     action_points = starting_action_points
     score = 0
     circle_scale = 1  # Reset circle_scale to 1
@@ -217,28 +239,30 @@ def level_up():
 
     move_circles()
 
+
     # Adding 12 more circles to the game
     for _ in range(3):
         # one anywhere to the left of center
         circle_positions.append(pygame.Vector2(random.randint(circle_radius, int(origin[0] * old_scaling)), random.randint(circle_radius, spawn_range_y)))
         circle_destinations.append(circle_positions[-1])
-        circle_colors.append(random.choice(['red', 'blue', 'green']))
+        circle_colors.append(pick_color())
 
         # one anywhere to the right of center
         circle_positions.append(pygame.Vector2(random.randint(int(origin[0] * (1 + old_scaling)), spawn_range_x), random.randint(circle_radius, spawn_range_y)))
         circle_destinations.append(circle_positions[-1])
-        circle_colors.append(random.choice(['red', 'blue', 'green']))
+        circle_colors.append(pick_color())
 
         # One anywhere above center
         circle_positions.append(pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, int(origin[1] * old_scaling))))
         circle_destinations.append(circle_positions[-1])
-        circle_colors.append(random.choice(['red', 'blue', 'green']))    
+        circle_colors.append(pick_color())    
 
         # One anywhere below center
         circle_positions.append(pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(int(origin[1] * (1 + old_scaling)), spawn_range_y)))
         circle_destinations.append(circle_positions[-1])
-        circle_colors.append(random.choice(['red', 'blue', 'green']))      
+        circle_colors.append(pick_color())      
     num_circles += 12
+
 
     # Increase action_points by 6
     action_points += 8
