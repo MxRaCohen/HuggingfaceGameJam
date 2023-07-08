@@ -164,6 +164,8 @@ def level_up():
     level += 1
     score += action_points * 100 + 1000
 
+    old_scaling = .5
+
     origin = (screen_width * .5, screen_height * .5)
 
     # Compress old points
@@ -171,8 +173,8 @@ def level_up():
         old_x, old_y = circle_positions[i]
         relative_x = old_x - origin[0]
         relative_y = old_y - origin[1]
-        new_x = relative_x * .5 + origin[0]
-        new_y = relative_y * .5 + origin[1]
+        new_x = relative_x * old_scaling + origin[0]
+        new_y = relative_y * old_scaling + origin[1]
         circle_destinations[i] = pygame.Vector2(new_x, new_y)
 
     move_circles()
@@ -180,22 +182,22 @@ def level_up():
     # Adding 12 more circles to the game
     for _ in range(3):
         # one anywhere to the left of center
-        circle_positions.append(pygame.Vector2(random.randint(circle_radius, origin[0] * 0.5), random.randint(circle_radius, spawn_range_y)))
+        circle_positions.append(pygame.Vector2(random.randint(circle_radius, int(origin[0] * old_scaling)), random.randint(circle_radius, spawn_range_y)))
         circle_destinations.append(circle_positions[-1])
         circle_colors.append(random.choice(['red', 'blue', 'green']))
 
         # one anywhere to the right of center
-        circle_positions.append(pygame.Vector2(random.randint(origin[0] * 1.5, spawn_range_x), random.randint(circle_radius, spawn_range_y)))
+        circle_positions.append(pygame.Vector2(random.randint(int(origin[0] * (1 + old_scaling)), spawn_range_x), random.randint(circle_radius, spawn_range_y)))
         circle_destinations.append(circle_positions[-1])
         circle_colors.append(random.choice(['red', 'blue', 'green']))
 
         # One anywhere above center
-        circle_positions.append(pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, origin[1] * 0.5)))
+        circle_positions.append(pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, int(origin[1] * old_scaling))))
         circle_destinations.append(circle_positions[-1])
         circle_colors.append(random.choice(['red', 'blue', 'green']))    
 
         # One anywhere below center
-        circle_positions.append(pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(origin[1] * 1.5, spawn_range_y)))
+        circle_positions.append(pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(int(origin[1] * (1 + old_scaling)), spawn_range_y)))
         circle_destinations.append(circle_positions[-1])
         circle_colors.append(random.choice(['red', 'blue', 'green']))      
     num_circles += 12
