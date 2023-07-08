@@ -28,7 +28,6 @@ model_mode = 'KMeans'
 easy_mode = True
 mesh_step = 100
 
-
 starting_action_points = 5
 init_circles = 5  # Circles on start
 circle_radius = 40  # Circle radius and minimum distance between circles
@@ -388,6 +387,8 @@ def level_up():
     else:
         pygame.mixer.music.load(level_music[level])
 
+    is_solved()
+    draw_easy_mode()
     pygame.mixer.music.play(-1)
     is_playing_sound = False
 
@@ -506,6 +507,9 @@ while running:
         move_circles()
 
         if easy_mode and easy_lines:
+            draw_easy_mode()
+        elif easy_mode and not easy_lines:
+            is_solved()
             draw_easy_mode()
 
         # Draw all circles with their assigned colors
