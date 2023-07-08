@@ -10,6 +10,7 @@ circle_scale = 1
 level = 0
 speed = 2000  # Speed of the circles
 is_playing_sound = False
+track_selected = False
 
 starting_action_points = 5
 init_circles = 5  # Circles on start
@@ -25,6 +26,7 @@ game_state = "start_menu"
 game_over = False
 action_points = starting_action_points  # Set the desired number of action points
 num_circles = init_circles
+score = 0
 
 # Load on click sounds
 on_click_sounds = list()
@@ -75,12 +77,13 @@ def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
 
 def restart_game():
-    global circle_positions, circle_destinations, circle_colors, action_points, circle_scale, num_circles
+    global circle_positions, circle_destinations, circle_colors, action_points, circle_scale, num_circles, score
     num_circles = init_circles
     circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
     circle_destinations = list(circle_positions)
     circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]
     action_points = starting_action_points
+    score = 0
     circle_scale = 1  # Reset circle_scale to 1
     min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
 
@@ -135,9 +138,11 @@ def is_solved():
     return cluster_colors_match
 
 def level_up():
-    global circle_scale, level, level_music, level_up_music, is_playing_sound, num_circles, circle_positions, circle_destinations, circle_colors, action_points
+    global circle_scale, level, level_music, level_up_music, is_playing_sound, num_circles, circle_positions, circle_destinations, circle_colors, action_points, score
+
     circle_scale *= 0.5  # Set circle_scale to 0.5 if is_solved is True
     level += 1
+    score += action_points * 100
 
     # Adding 10 more circles to the game
     for _ in range(10):
@@ -212,7 +217,6 @@ while running:
             restart_game()
             game_over = False
 
-
     if game_over:
         draw_game_over_screen()
         keys = pygame.key.get_pressed()
@@ -255,8 +259,12 @@ while running:
 
         # Display action points
         font = pygame.font.SysFont(None, 36)
-        text = font.render(f"Actions: {action_points}", True, pygame.Color("white"))
-        screen.blit(text, (10, 10))
+        ap_text = font.render(f"Actions: {action_points}", True, pygame.Color("white"))
+        screen.blit(ap_text, (10, 10))
+
+        # Display Score
+        score_text = font.render(f"Score: {score}", True, pygame.Color("white"))
+        screen.blit(score_text, (1000, 10))
 
         pygame.display.flip()
 
