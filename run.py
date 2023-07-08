@@ -197,10 +197,12 @@ def draw_start_screen():
     screen.fill((0, 0, 0))
     font = pygame.font.SysFont('arial', 40)
     title = font.render('Hugging Face Game Jam', True, (255, 255, 255))
-    start_button = font.render('Press Space to Start', True, (255, 255, 255))
+    start_button = font.render('Start - Space', True, (255, 255, 255))
+    hard_button = font.render('Hard Mode - h', True, (255, 255, 255))
     screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/2))
     screen.blit(start_button, (screen_width/2 - start_button.get_width()/2, screen_height/2 + start_button.get_height()/2))
-    
+    screen.blit(hard_button, (screen_width/2 - hard_button.get_width()/2, screen_height/1.5 + hard_button.get_height()/2))
+
     if not is_playing_sound:
         pygame.mixer.music.load('sounds/start_menu.wav')
         pygame.mixer.music.play(-1)
@@ -383,6 +385,11 @@ while running:
         draw_start_screen()
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
+            easy_mode = True
+        elif keys[pygame.K_h]:
+            easy_mode = False
+
+        if keys[pygame.K_h] or keys[pygame.K_SPACE]:
             game_state = "game"
             pygame.mixer.music.stop()
             pygame.mixer.music.load(level_music[0])
