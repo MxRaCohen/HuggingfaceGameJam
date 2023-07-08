@@ -105,6 +105,10 @@ level_music = {
 mute_button_img = pygame.image.load('icons/mute_button.jpg')
 unmute_button_img = pygame.image.load('icons/unmute_button.jpg')
 
+# Load Start and End screens
+start_menu_img = pygame.image.load('icons/KMeany.png')
+end_menu_img = pygame.image.load('icons/KMeany-end-screen.png')
+
 
 # Twice the radius to prevent overlapping
 min_distance = circle_radius * 2  
@@ -217,19 +221,12 @@ def restart_game():
 
     
 def draw_start_screen():
-    global is_playing_sound
+    global is_playing_sound, start_menu_img
     screen.fill((0, 0, 0))
     font = pygame.font.SysFont('lucidaconsole', 40)
-    title = font.render('Hugging Face Game Jam', True, (255, 255, 255))
-    start_button = font.render('Start - Space', True, (255, 255, 255))
-    hard_button = font.render('Hard Mode - h', True, (255, 255, 255))
-    options_button = font.render('Options - o', True, (255, 255, 255))
-    current_mode = font.render('Current Mode: {}'.format(model_mode), True, (255, 255, 255))
+    current_mode = font.render('Current Mode: {}'.format(model_mode), True, (0, 0, 0))
 
-    screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/2))
-    screen.blit(start_button, (screen_width/2 - start_button.get_width()/2, screen_height/2 + start_button.get_height()/2))
-    screen.blit(hard_button, (screen_width/2 - hard_button.get_width()/2, screen_height/1.5 + hard_button.get_height()/2))
-    screen.blit(options_button, (10, screen_height - options_button.get_height()))
+    screen.blit(start_menu_img, (0, 0))
     screen.blit(current_mode, (screen_width - current_mode.get_width(), screen_height - current_mode.get_height()))
 
     if current_mode in ['AgglomerativeClustering', 'SpectralClustering', 'OPTICS']:
@@ -244,15 +241,10 @@ def draw_start_screen():
     pygame.display.update()
 
 def draw_game_over_screen():
-   global is_playing_sound, score
+   global is_playing_sound, score, end_menu_img
    screen.fill((0, 0, 0))
    font = pygame.font.SysFont('lucidaconsole', 40)
-   title = font.render('Game Over', True, (255, 255, 255))
-   restart_button = font.render('R - Restart', True, (255, 255, 255))
-   quit_button = font.render('Q - Quit', True, (255, 255, 255))
-   screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/10 - title.get_height()/2))
-   screen.blit(restart_button, (screen_width/2 - restart_button.get_width()/2, screen_height/10 + restart_button.get_height()))
-   screen.blit(quit_button, (screen_width/2 - quit_button.get_width()/2, screen_height/10 + 2*quit_button.get_height()))
+   screen.blit(end_menu_img, (0,0))
 
    old_scores = get_high_scores()
    if write_high_score(score):
@@ -260,17 +252,17 @@ def draw_game_over_screen():
        screen.blit(new_high_score, (screen_width/2 - new_high_score.get_width()/2, screen_height/5 + new_high_score.get_height()/2))
 
    your_score = font.render('Score: {}'.format(score), True, (255, 255, 255))
-   screen.blit(your_score, (screen_width/2 - your_score.get_width()/2, screen_height/2 + your_score.get_height()/2))
+   screen.blit(your_score, (screen_width/2 - your_score.get_width()/2, screen_height/4 + your_score.get_height()/2))
 
    # Display the high scores
    high_scores_title = font.render('High Scores', True, (255, 255, 255))
-   screen.blit(high_scores_title, (screen_width/2 - high_scores_title.get_width()/2, screen_height/2 + your_score.get_height() + high_scores_title.get_height()))
+   screen.blit(high_scores_title, (screen_width/2 - high_scores_title.get_width()/2, screen_height/3 + your_score.get_height() + high_scores_title.get_height()))
 
    # Sort the scores in descending order
    old_scores.sort(reverse=True)
 
    # Calculate the y-coordinate for each high score entry
-   y_offset = screen_height/2 + your_score.get_height() + high_scores_title.get_height() + 50
+   y_offset = screen_height/3 + your_score.get_height() + high_scores_title.get_height() + 50
 
    for i, score_entry in enumerate(old_scores):
        score_text = font.render('{}: {}'.format(i+1, score_entry), True, (255, 255, 255))
