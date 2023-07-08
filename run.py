@@ -87,18 +87,34 @@ level_up_music = pygame.mixer.Sound("sounds/level_up.wav")
 
 # Load level music
 level_music = {
-    0 : 'sounds/levels/WheresMySpaceship.wav',
-    1 : 'sounds/levels/SpaceTheme.wav',
-    2 : 'sounds/levels/FallingStars.wav',
-    3 : 'sounds/levels/ThroughSpace.wav',
-    4 : 'sounds/levels/Planetrise.wav',
-    5 : 'sounds/levels/FrozenJam.wav',
-    6 : 'sounds/levels/SpaceSprinkles.mp3',
-    7 : 'sounds/levels/TowerDefenseTheme.mp3',
-    8 : 'sounds/levels/HangInThere.mp3',
-    9 : 'sounds/levels/MagicSpace.mp3',
+    'easy' : {
+        0 : 'sounds/levels/Planetrise.wav',
+        1 : 'sounds/levels/FallingStars.wav',
+        2 : 'sounds/levels/SpaceSprinkles.mp3',
+        3 : 'sounds/levels/MagicSpace.mp3',
+        4 : 'sounds/levels/FrozenJam.wav',
+    },
+    'hard' : {
+        0 : 'sounds/levels/ThroughSpace.wav',
+        1 : 'sounds/levels/TowerDefenseTheme.mp3',
+        2 : 'sounds/levels/WheresMySpaceship.wav',
+        3 : 'sounds/levels/SpaceTheme.wav',
+        4 : 'sounds/levels/HangInThere.mp3',
+    }
 }
 
+def get_level_music():
+    global level, easy_mode, level_music
+    if easy_mode:
+        if level < 5:
+            return level_music['easy'][level]
+        else:
+            return level_music['easy'][4]
+    else:
+        if level < 5:
+            return level_music['hard'][level]
+        else:
+            return level_music['hard'][4]
 
 # Load mute/unmute button icons
 mute_button_img = pygame.image.load('icons/mute_button.jpg')
@@ -214,7 +230,7 @@ def restart_game():
     easy_lines = list()
     min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
     level = 0
-    pygame.mixer.music.load(level_music[level])
+    pygame.mixer.music.load(get_level_music())
 
     pygame.mixer.music.play(-1)
     is_playing_sound = False
@@ -380,10 +396,9 @@ def level_up():
     pygame.mixer.music.stop()
     pygame.mixer.Sound.play(level_up_music)
     pygame.mixer.Sound.fadeout(level_up_music, 500)
-    if level > 8:
-        pygame.mixer.music.load(level_music[9])
-    else:
-        pygame.mixer.music.load(level_music[level])
+
+    new_music_file = get_level_music()
+    pygame.mixer.music.load(new_music_file)
 
     is_solved()
     draw_easy_mode()
@@ -478,7 +493,7 @@ while running:
         if  keys[pygame.K_SPACE]:
             game_state = "game"
             pygame.mixer.music.stop()
-            pygame.mixer.music.load(level_music[0])
+            pygame.mixer.music.load(get_level_music())
             pygame.mixer.music.play(-1)
             is_playing_sound = True
             restart_game()
