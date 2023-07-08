@@ -105,8 +105,6 @@ level_music = {
 mute_button_img = pygame.image.load('icons/mute_button.jpg')
 unmute_button_img = pygame.image.load('icons/unmute_button.jpg')
 
-start_menu_img = pygame.image.load('icons/KMeany.png')
-
 
 # Twice the radius to prevent overlapping
 min_distance = circle_radius * 2  
@@ -219,12 +217,19 @@ def restart_game():
 
     
 def draw_start_screen():
-    global is_playing_sound, start_menu_img, current_mode
+    global is_playing_sound
     screen.fill((0, 0, 0))
-    screen.blit(start_menu_img, (0, 0))
-    font = pygame.font.SysFont('lucidasans', 40)
-    current_mode = font.render('Current Mode: {}'.format(model_mode), True, (0, 0, 0))
+    font = pygame.font.SysFont('lucidaconsole', 40)
+    title = font.render('Hugging Face Game Jam', True, (255, 255, 255))
+    start_button = font.render('Start - Space', True, (255, 255, 255))
+    hard_button = font.render('Hard Mode - h', True, (255, 255, 255))
+    options_button = font.render('Options - o', True, (255, 255, 255))
+    current_mode = font.render('Current Mode: {}'.format(model_mode), True, (255, 255, 255))
 
+    screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/2))
+    screen.blit(start_button, (screen_width/2 - start_button.get_width()/2, screen_height/2 + start_button.get_height()/2))
+    screen.blit(hard_button, (screen_width/2 - hard_button.get_width()/2, screen_height/1.5 + hard_button.get_height()/2))
+    screen.blit(options_button, (10, screen_height - options_button.get_height()))
     screen.blit(current_mode, (screen_width - current_mode.get_width(), screen_height - current_mode.get_height()))
 
     if current_mode in ['AgglomerativeClustering', 'SpectralClustering', 'OPTICS']:
@@ -241,13 +246,13 @@ def draw_start_screen():
 def draw_game_over_screen():
    global is_playing_sound, score
    screen.fill((0, 0, 0))
-   font = pygame.font.SysFont('arial', 40)
+   font = pygame.font.SysFont('lucidaconsole', 40)
    title = font.render('Game Over', True, (255, 255, 255))
    restart_button = font.render('R - Restart', True, (255, 255, 255))
    quit_button = font.render('Q - Quit', True, (255, 255, 255))
-   screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/10 - title.get_height()/3))
+   screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/10 - title.get_height()/2))
    screen.blit(restart_button, (screen_width/2 - restart_button.get_width()/2, screen_height/10 + restart_button.get_height()))
-   screen.blit(quit_button, (screen_width/2 - quit_button.get_width()/2, screen_height/10 + quit_button.get_height()/2))
+   screen.blit(quit_button, (screen_width/2 - quit_button.get_width()/2, screen_height/10 + 2*quit_button.get_height()))
 
    old_scores = get_high_scores()
    if write_high_score(score):
@@ -257,12 +262,28 @@ def draw_game_over_screen():
    your_score = font.render('Score: {}'.format(score), True, (255, 255, 255))
    screen.blit(your_score, (screen_width/2 - your_score.get_width()/2, screen_height/2 + your_score.get_height()/2))
 
+   # Display the high scores
+   high_scores_title = font.render('High Scores', True, (255, 255, 255))
+   screen.blit(high_scores_title, (screen_width/2 - high_scores_title.get_width()/2, screen_height/2 + your_score.get_height() + high_scores_title.get_height()))
+
+   # Sort the scores in descending order
+   old_scores.sort(reverse=True)
+
+   # Calculate the y-coordinate for each high score entry
+   y_offset = screen_height/2 + your_score.get_height() + high_scores_title.get_height() + 50
+
+   for i, score_entry in enumerate(old_scores):
+       score_text = font.render('{}: {}'.format(i+1, score_entry), True, (255, 255, 255))
+       screen.blit(score_text, (screen_width/2 - score_text.get_width()/2, y_offset + i*score_text.get_height()))
+
    if not is_playing_sound:
        pygame.mixer.music.load('sounds/end_game.wav')
        pygame.mixer.music.play(-1)
        is_playing_sound = True
 
    pygame.display.update()
+
+
 
 # is_in_options = False
 # def draw_options_screen():
@@ -380,8 +401,6 @@ def level_up():
 
     pygame.mixer.music.play(-1)
     is_playing_sound = False
-    is_solved()
-    draw_easy_mode()
 
 def mute_unmute_sound():
     global sound_muted
@@ -448,6 +467,7 @@ while running:
         elif event.type == pygame.MOUSEMOTION:
             if dragging and current_circle is not None:
                 mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
+
                 # Constrain the mouse position within the screen boundaries
                 constrained_pos = pygame.Vector2(
                     clamp(mouse_pos.x, circle_radius, screen.get_width() - circle_radius),
@@ -529,7 +549,7 @@ while running:
             screen.blit(unmute_button_img, mute_button_pos)
             
         # Display action points
-        font = pygame.font.SysFont(None, 36)
+        font = pygame.font.SysFont("lucidaconsole", 36)
         ap_text = font.render(f"Actions: {action_points}", True, pygame.Color("white"))
         screen.blit(ap_text, (10, 10))
 
