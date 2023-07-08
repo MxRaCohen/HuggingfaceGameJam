@@ -150,7 +150,7 @@ def level_up():
        pygame.mixer.music.load(level_music[level])
 
     pygame.mixer.music.play(-1)
-    is_playing_sound = True
+    is_playing_sound = False
 
 
 while running:
@@ -208,6 +208,7 @@ while running:
         if keys[pygame.K_r]:
             game_state = "start_menu"
             game_over = False
+            score = 0
             action_points = starting_action_points
         if keys[pygame.K_q]:
             pygame.quit()
