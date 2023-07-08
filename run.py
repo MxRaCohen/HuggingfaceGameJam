@@ -108,6 +108,7 @@ unmute_button_img = pygame.image.load('icons/unmute_button.jpg')
 # Load Start and End screens
 start_menu_img = pygame.image.load('icons/KMeany.png')
 end_menu_img = pygame.image.load('icons/KMeany-end-screen.png')
+options_menu_img = pygame.image.load('icons/Options-Menu.png')
 
 
 # Twice the radius to prevent overlapping
@@ -277,17 +278,13 @@ def draw_game_over_screen():
 
 
 
-# is_in_options = False
-# def draw_options_screen():
-#     global is_playing_sound, model_mode
-#     screen.fill((0, 0, 0))
-#     font = pygame.font.SysFont('arial', 40)
-#     current_mode = font.render('Current Mode: {}'.format(model_mode), True, (255, 255, 255))
+is_in_options = False
 
-#     screen.blit(current_mode, (screen_width/2 - current_mode.get_width()/2, screen_height/5 - current_mode.get_height()/2))
-
-
-#     pygame.display.update()
+def draw_options_screen():
+    global is_playing_sound, model_mode, options_menu_img
+    screen.fill((0, 0, 0))
+    screen.blit(options_menu_img, (0,0))
+    pygame.display.update()
 
 
 
@@ -468,13 +465,17 @@ while running:
                 circle_destinations[current_circle] = constrained_pos
 
 
-    if game_state == "start_menu":
+    if game_state == "start_menu" and not is_in_options:
         draw_start_screen()
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
             easy_mode = True
         elif keys[pygame.K_h]:
             easy_mode = False
+
+        if keys[pygame.K_o]:
+            is_in_options = True
+            pass
             
 
         if keys[pygame.K_1] or keys[pygame.K_KP1]:
@@ -502,8 +503,14 @@ while running:
             restart_game()
             game_over = False
 
-    if game_state == 'options_menu':
+    elif is_in_options:
         draw_options_screen()
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_o]:
+            is_in_options = False
+            pass
+
 
 
     if game_over:
