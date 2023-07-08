@@ -105,6 +105,8 @@ level_music = {
 mute_button_img = pygame.image.load('icons/mute_button.jpg')
 unmute_button_img = pygame.image.load('icons/unmute_button.jpg')
 
+start_menu_img = pygame.image.load('icons/KMeany.png')
+
 
 # Twice the radius to prevent overlapping
 min_distance = circle_radius * 2  
@@ -217,19 +219,12 @@ def restart_game():
 
     
 def draw_start_screen():
-    global is_playing_sound
+    global is_playing_sound, start_menu_img, current_mode
     screen.fill((0, 0, 0))
-    font = pygame.font.SysFont('arial', 40)
-    title = font.render('Hugging Face Game Jam', True, (255, 255, 255))
-    start_button = font.render('Start - Space', True, (255, 255, 255))
-    hard_button = font.render('Hard Mode - h', True, (255, 255, 255))
-    options_button = font.render('Options - o', True, (255, 255, 255))
-    current_mode = font.render('Current Mode: {}'.format(model_mode), True, (255, 255, 255))
+    screen.blit(start_menu_img, (0, 0))
+    font = pygame.font.SysFont('lucidasans', 40)
+    current_mode = font.render('Current Mode: {}'.format(model_mode), True, (0, 0, 0))
 
-    screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/2))
-    screen.blit(start_button, (screen_width/2 - start_button.get_width()/2, screen_height/2 + start_button.get_height()/2))
-    screen.blit(hard_button, (screen_width/2 - hard_button.get_width()/2, screen_height/1.5 + hard_button.get_height()/2))
-    screen.blit(options_button, (10, screen_height - options_button.get_height()))
     screen.blit(current_mode, (screen_width - current_mode.get_width(), screen_height - current_mode.get_height()))
 
     if current_mode in ['AgglomerativeClustering', 'SpectralClustering', 'OPTICS']:
@@ -385,6 +380,8 @@ def level_up():
 
     pygame.mixer.music.play(-1)
     is_playing_sound = False
+    is_solved()
+    draw_easy_mode()
 
 def mute_unmute_sound():
     global sound_muted
