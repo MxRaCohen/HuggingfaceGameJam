@@ -49,32 +49,36 @@ def get_high_scores():
     try:
         f = shelve.open('high_scores.txt')
         scores = f['scores']
-        scores.sort()
+        scores.sort(reverse=True)
         while len(scores) < 5:
-            scores.append(0)
+            scores.append((0, '', ''))
         f.close()
-        return scores 
+        return scores
     except:
-        return [0] * 5
+        return [(0, '', '')] * 5
 
-def write_high_score(new_score):
+
+def write_high_score(new_score, algorithm, difficulty):
     f = shelve.open('high_scores.txt')
     try:
         old_scores = f['scores']
 
-        if new_score not in old_scores:
-            old_scores.append(new_score)
+        # Append the new score along with the algorithm and difficulty
+        if (new_score, algorithm, difficulty) not in old_scores:
+            old_scores.append((new_score, algorithm, difficulty))
 
+        # Sort the scores in descending order based on score
         old_scores.sort(reverse=True)
-        new_scores = old_scores[0:5]
+        new_scores = old_scores[:5]
     except:
-        new_scores = [new_score, 0, 0, 0, 0]
+        new_scores = [(new_score, algorithm, difficulty)] + [(0, '', '')] * 4
 
     f['scores'] = new_scores
     f.close()
-    if new_score in new_scores:
+    if (new_score, algorithm, difficulty) in new_scores:
         return True
     return False
+
 
 
 # Load on click sounds
@@ -103,8 +107,8 @@ level_music = {
     }
 }
 
-def get_level_music():
-    global level, easy_mode, level_music
+def get_level_music(level=level):
+    global easy_mode, level_music
     if easy_mode:
         if level < 5:
             return level_music['easy'][level]
@@ -213,7 +217,7 @@ def calculate_easy_mode(trained_model):
 
 
 def draw_easy_mode():
-    global easy_lines, screen
+    global easy_lines, screen, easy_mode
 
     for i, line in enumerate(easy_lines):
         pygame.draw.lines(screen, color='gold', closed=False, points=line)  
@@ -256,39 +260,42 @@ def draw_start_screen():
     pygame.display.update()
 
 def draw_game_over_screen():
-   global is_playing_sound, score, end_menu_img
-   screen.fill((0, 0, 0))
-   font = pygame.font.SysFont('lucidaconsole', 40)
-   screen.blit(end_menu_img, (0,0))
+    global is_playing_sound, score, end_menu_img
+    screen.fill((0, 0, 0))
+    font = pygame.font.SysFont('lucidaconsole', 40)
+    screen.blit(end_menu_img, (0, 0))
 
-   old_scores = get_high_scores()
-   if write_high_score(score):
-       new_high_score = font.render('New high score!', True, (255, 255, 255))
-       screen.blit(new_high_score, (screen_width/2 - new_high_score.get_width()/2, screen_height/5 + new_high_score.get_height()/2))
+    old_scores = get_high_scores()
+    if write_high_score(score, model_mode, 'Easy' if easy_mode else 'Hard'):
+        new_high_score = font.render('New high score!', True, (255, 255, 255))
+        screen.blit(new_high_score, (screen_width / 2 - new_high_score.get_width() / 2, screen_height / 5 + new_high_score.get_height() / 2))
 
-   your_score = font.render('Score: {}'.format(score), True, (255, 255, 255))
-   screen.blit(your_score, (screen_width/2 - your_score.get_width()/2, screen_height/4 + your_score.get_height()/2))
+    your_score = font.render('Score: {}'.format(score), True, (255, 255, 255))
+    screen.blit(your_score, (screen_width / 2 - your_score.get_width() / 2, screen_height / 4 + your_score.get_height() / 2))
 
-   # Display the high scores
-   high_scores_title = font.render('High Scores', True, (255, 255, 255))
-   screen.blit(high_scores_title, (screen_width/2 - high_scores_title.get_width()/2, screen_height/3 + your_score.get_height() + high_scores_title.get_height()))
+    # Display the high scores
+    high_scores_title = font.render('High Scores', True, (255, 255, 255))
+    screen.blit(high_scores_title, (screen_width / 2 - high_scores_title.get_width() / 2, screen_height / 3 + your_score.get_height() + high_scores_title.get_height()))
 
-   # Sort the scores in descending order
-   old_scores.sort(reverse=True)
+    # Sort the scores in descending order
+    old_scores.sort(reverse=True)
 
-   # Calculate the y-coordinate for each high score entry
-   y_offset = screen_height/3 + your_score.get_height() + high_scores_title.get_height() + 50
+    # Calculate the y-coordinate for each high score entry
+    y_offset = screen_height / 3 + your_score.get_height() + high_scores_title.get_height() + 50
 
-   for i, score_entry in enumerate(old_scores):
-       score_text = font.render('{}: {}'.format(i+1, score_entry), True, (255, 255, 255))
-       screen.blit(score_text, (screen_width/2 - score_text.get_width()/2, y_offset + i*score_text.get_height()))
+    for i, score_entry in enumerate(old_scores):
+        score_value = score_entry[0]
+        algorithm = score_entry[1]
+        difficulty = score_entry[2]
+        score_text = font.render('{}: {} - {} - {}'.format(i + 1, score_value, algorithm, difficulty), True, (255, 255, 255))
+        screen.blit(score_text, (screen_width / 2 - score_text.get_width() / 2, y_offset + i * score_text.get_height()))
 
-   if not is_playing_sound:
-       pygame.mixer.music.load('sounds/end_game.wav')
-       pygame.mixer.music.play(-1)
-       is_playing_sound = True
+    if not is_playing_sound:
+        pygame.mixer.music.load('sounds/end_game.wav')
+        pygame.mixer.music.play(-1)
+        is_playing_sound = True
 
-   pygame.display.update()
+    pygame.display.update()
 
 
 
@@ -400,11 +407,12 @@ def level_up():
     pygame.mixer.Sound.play(level_up_music)
     pygame.mixer.Sound.fadeout(level_up_music, 500)
 
-    new_music_file = get_level_music()
+    new_music_file = get_level_music(level)
     pygame.mixer.music.load(new_music_file)
 
-    is_solved()
-    draw_easy_mode()
+    if easy_mode:
+        is_solved()
+        draw_easy_mode()
     pygame.mixer.music.play(-1)
     is_playing_sound = False
 
@@ -447,9 +455,6 @@ while running:
                 if is_solved():
                     level_up()
             
-
-            
-
         elif event.type == pygame.MOUSEMOTION:
             if dragging and current_circle is not None:
                 mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
@@ -465,10 +470,6 @@ while running:
     if game_state == "start_menu" and not is_in_options:
         draw_start_screen()
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE]:
-            easy_mode = True
-        elif keys[pygame.K_h]:
-            easy_mode = False
 
         if keys[pygame.K_o]:
             is_in_options = True
@@ -515,8 +516,6 @@ while running:
         if keys[pygame.K_x]:
             is_in_options = False
             pass
-
-
 
     if game_over:
         draw_game_over_screen()
