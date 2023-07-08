@@ -300,9 +300,7 @@ def draw_options_screen():
     screen.blit(options_menu_img, (0,0))
     pygame.display.update()
 
-
-
-def is_solved():
+def model():
     my_model = get_untrained_model()
     my_model.fit([list(circle_positions[i]) for i in range(num_circles)])
 
@@ -313,6 +311,10 @@ def is_solved():
         my_labels = my_model.predict([list(circle_positions[i]) for i in range(num_circles)])
     else:
         my_labels = my_model.labels_
+    return my_labels
+
+def is_solved():
+    my_labels = model()
 
     # Check if each cluster contains circles of the same color
     cluster_colors_match = True
@@ -439,10 +441,14 @@ while running:
             dragging = False
             if current_circle != last_circle and action_points > 0:
                 action_points -= 1
+                if is_solved():
+                    level_up()
+            elif current_circle == last_circle and current_circle is not None:
+                if is_solved():
+                    level_up()
             
 
-            if is_solved():
-                level_up()
+            
 
         elif event.type == pygame.MOUSEMOTION:
             if dragging and current_circle is not None:
