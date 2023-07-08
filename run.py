@@ -103,8 +103,8 @@ level_music = {
     }
 }
 
-def get_level_music():
-    global level, easy_mode, level_music
+def get_level_music(level=level):
+    global easy_mode, level_music
     if easy_mode:
         if level < 5:
             return level_music['easy'][level]
@@ -213,7 +213,7 @@ def calculate_easy_mode(trained_model):
 
 
 def draw_easy_mode():
-    global easy_lines, screen
+    global easy_lines, screen, easy_mode
 
     for i, line in enumerate(easy_lines):
         pygame.draw.lines(screen, color='gold', closed=False, points=line)  
@@ -400,11 +400,12 @@ def level_up():
     pygame.mixer.Sound.play(level_up_music)
     pygame.mixer.Sound.fadeout(level_up_music, 500)
 
-    new_music_file = get_level_music()
+    new_music_file = get_level_music(level)
     pygame.mixer.music.load(new_music_file)
 
-    is_solved()
-    draw_easy_mode()
+    if easy_mode:
+        is_solved()
+        draw_easy_mode()
     pygame.mixer.music.play(-1)
     is_playing_sound = False
 
@@ -465,10 +466,6 @@ while running:
     if game_state == "start_menu" and not is_in_options:
         draw_start_screen()
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE]:
-            easy_mode = True
-        elif keys[pygame.K_h]:
-            easy_mode = False
 
         if keys[pygame.K_o]:
             is_in_options = True
