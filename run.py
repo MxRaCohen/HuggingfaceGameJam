@@ -190,6 +190,11 @@ def restart_game():
     circle_scale = 1  # Reset circle_scale to 1
     easy_lines = list()
     min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
+    level = 0
+    pygame.mixer.music.load(level_music[level])
+
+    pygame.mixer.music.play(-1)
+    is_playing_sound = False
 
     
 def draw_start_screen():
