@@ -2,6 +2,7 @@
 import pygame
 import random
 from sklearn.cluster import KMeans
+import shelve
 import math
 import shelve
 import numpy as np
@@ -16,6 +17,7 @@ speed = 2000  # Speed of the circles
 is_playing_sound = False
 track_selected = False
 color_counts = {'red': 0, 'blue': 0, 'green': 0}
+sound_muted = False
 
 easy_mode = True
 mesh_step = 100
@@ -54,8 +56,10 @@ def write_high_score(new_score):
     f = shelve.open('high_scores.txt')
     try:
         old_scores = f['scores']
+
         if new_score not in old_scores:
             old_scores.append(new_score)
+
         old_scores.sort(reverse=True)
         new_scores = old_scores[0:5]
     except:
@@ -89,6 +93,11 @@ level_music = {
     8 : 'sounds/levels/HangInThere.mp3',
     9 : 'sounds/levels/MagicSpace.mp3',
 }
+
+
+# Load mute/unmute button icons
+mute_button_img = pygame.image.load('icons/mute_button.jpg')
+unmute_button_img = pygame.image.load('icons/unmute_button.jpg')
 
 
 # Twice the radius to prevent overlapping
@@ -168,15 +177,23 @@ def draw_start_screen():
     pygame.display.update()
 
 def draw_game_over_screen():
-   global is_playing_sound
+   global is_playing_sound, score
    screen.fill((0, 0, 0))
    font = pygame.font.SysFont('arial', 40)
    title = font.render('Game Over', True, (255, 255, 255))
    restart_button = font.render('R - Restart', True, (255, 255, 255))
    quit_button = font.render('Q - Quit', True, (255, 255, 255))
-   screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/3))
-   screen.blit(restart_button, (screen_width/2 - restart_button.get_width()/2, screen_height/1.9 + restart_button.get_height()))
-   screen.blit(quit_button, (screen_width/2 - quit_button.get_width()/2, screen_height/2 + quit_button.get_height()/2))
+   screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/10 - title.get_height()/3))
+   screen.blit(restart_button, (screen_width/2 - restart_button.get_width()/2, screen_height/10 + restart_button.get_height()))
+   screen.blit(quit_button, (screen_width/2 - quit_button.get_width()/2, screen_height/10 + quit_button.get_height()/2))
+
+   old_scores = get_high_scores()
+   if write_high_score(score):
+       new_high_score = font.render('New high score!', True, (255, 255, 255))
+       screen.blit(new_high_score, (screen_width/2 - new_high_score.get_width()/2, screen_height/5 + new_high_score.get_height()/2))
+
+   your_score = font.render('Score: {}'.format(score), True, (255, 255, 255))
+   screen.blit(your_score, (screen_width/2 - your_score.get_width()/2, screen_height/2 + your_score.get_height()/2))
 
    if not is_playing_sound:
        pygame.mixer.music.load('sounds/end_game.wav')
@@ -316,15 +333,22 @@ def level_up():
     pygame.mixer.music.play(-1)
     is_playing_sound = False
 
-
+def mute_unmute_sound():
+    global sound_muted
+    sound_muted = not sound_muted
+    pygame.mixer.music.set_volume(0 if sound_muted else 1)
 
 while running:
+    mute_button_pos = pygame.Rect(20, 650, 40, 40)
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             click_pos = pygame.Vector2(pygame.mouse.get_pos())
+            if mute_button_pos.collidepoint(click_pos.x, click_pos.y):
+                mute_unmute_sound()
 
             for i in range(num_circles):
                 if is_point_in_circle(click_pos, circle_positions[i], circle_radius):
@@ -396,7 +420,11 @@ while running:
             
         if action_points == 0:
             game_over = True
-
+        if sound_muted:
+            screen.blit(mute_button_img, mute_button_pos)
+        else:
+            screen.blit(unmute_button_img, mute_button_pos)
+            
         # Display action points
         font = pygame.font.SysFont(None, 36)
         ap_text = font.render(f"Actions: {action_points}", True, pygame.Color("white"))
