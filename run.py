@@ -4,6 +4,9 @@ import random
 from sklearn.cluster import KMeans
 import shelve
 import math
+import shelve
+import numpy as np
+import matplotlib.pyplot as plt
 
 pygame.init()
 screen_height = 720
@@ -15,6 +18,10 @@ is_playing_sound = False
 track_selected = False
 color_counts = {'red': 0, 'blue': 0, 'green': 0}
 sound_muted = False
+
+easy_mode = True
+mesh_step = 100
+
 
 starting_action_points = 5
 init_circles = 5  # Circles on start
@@ -32,6 +39,7 @@ action_points = starting_action_points  # Set the desired number of action point
 num_circles = init_circles
 score = 0
 
+
 def get_high_scores():
     try:
         f = shelve.open('high_scores.txt')
@@ -48,7 +56,10 @@ def write_high_score(new_score):
     f = shelve.open('high_scores.txt')
     try:
         old_scores = f['scores']
-        old_scores.append(new_score)
+
+        if new_score not in old_scores:
+            old_scores.append(new_score)
+
         old_scores.sort(reverse=True)
         new_scores = old_scores[0:5]
     except:
@@ -83,9 +94,11 @@ level_music = {
     9 : 'sounds/levels/MagicSpace.mp3',
 }
 
+
 # Load mute/unmute button icons
 mute_button_img = pygame.image.load('icons/mute_button.jpg')
 unmute_button_img = pygame.image.load('icons/unmute_button.jpg')
+
 
 # Twice the radius to prevent overlapping
 min_distance = circle_radius * 2  
@@ -189,9 +202,45 @@ def draw_game_over_screen():
 
    pygame.display.update()
 
+easy_lines = list()
+def calculate_easy_mode(kmeans_model):
+    global screen_width, screen_height, mesh_step, easy_lines
+    # Initialize background mesh and predict
+    xx, yy = np.meshgrid(np.arange(0, screen_width, mesh_step),
+                         np.arange(0, screen_height, mesh_step))
+    Z = kmeans_model.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+    easy_colors = ['gold', 'violet', 'cyan']
+
+    # Contour over the mesh and extract coordinates
+    cs = plt.contour(xx, yy, Z)
+
+    lines = list()
+    for item in cs.collections:
+       for i in item.get_paths():
+          v = i.vertices
+          x = v[:, 0]
+          y = v[:, 1]
+          lines.append(list(zip([float(j) for j in x], [float(k) for k in y])))
+
+    easy_lines = lines
+
+
+def draw_easy_mode():
+    global easy_lines, screen
+
+    for i, line in enumerate(easy_lines):
+        pygame.draw.lines(screen, color='gold', closed=False, points=line)  
+
+
+
 def is_solved():
     kmeans = KMeans(n_clusters=3, n_init=10)  # Change the number of clusters as needed
     kmeans.fit([list(circle_positions[i]) for i in range(num_circles)])
+
+    if easy_mode:
+        calculate_easy_mode(kmeans)
 
     # Check if each cluster contains circles of the same color
     cluster_colors_match = True
@@ -275,7 +324,7 @@ def level_up():
     # Stop music, play level-up, start new level music
     pygame.mixer.music.stop()
     pygame.mixer.Sound.play(level_up_music)
-    pygame.mixer.Sound.fadeout(level_up_music, 100)
+    pygame.mixer.Sound.fadeout(level_up_music, 500)
     if level > 8:
         pygame.mixer.music.load(level_music[9])
     else:
@@ -359,6 +408,9 @@ while running:
         screen.fill("black")
 
         move_circles()
+
+        if easy_mode and easy_lines:
+            draw_easy_mode()
 
         # Draw all circles with their assigned colors
         for i in range(num_circles):
