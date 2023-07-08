@@ -160,6 +160,7 @@ circle_colors = [(pick_color()) for _ in range(num_circles)]  # Assign random co
 
 # Variable to store which circle is currently being controlled
 current_circle = None
+last_circle = None
 dragging = False
 
 
