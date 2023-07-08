@@ -77,7 +77,7 @@ def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
 
 def restart_game():
-    global circle_positions, circle_destinations, circle_colors, action_points, circle_scale, num_circles, score
+    global circle_positions, circle_destinations, circle_colors, action_points, circle_scale, num_circles, score, spawn_range_x, spawn_range_y
     num_circles = init_circles
     circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
     circle_destinations = list(circle_positions)
@@ -85,6 +85,8 @@ def restart_game():
     action_points = starting_action_points
     score = 0
     circle_scale = 1  # Reset circle_scale to 1
+    spawn_range_x = screen.get_width() - circle_radius * 2
+    spawn_range_y = screen.get_height() - circle_radius * 2
     min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
 
     
@@ -140,19 +142,46 @@ def is_solved():
 def level_up():
     global circle_scale, level, level_music, level_up_music, is_playing_sound, num_circles, circle_positions, circle_destinations, circle_colors, action_points, score
 
-    circle_scale *= 0.5  # Set circle_scale to 0.5 if is_solved is True
+    circle_scale *= 0.7  # Set circle_scale to 0.5 if is_solved is True
     level += 1
-    score += action_points * 100
+    score += action_points * 100 + 1000
 
-    # Adding 10 more circles to the game
-    for _ in range(10):
-        circle_positions.append(pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)))
+    origin = (screen_width * .5, screen_height * .5)
+
+    # Compress old points
+    for i in range(len(circle_positions)):
+        old_x, old_y = circle_positions[i]
+        relative_x = old_x - origin[0]
+        relative_y = old_y - origin[1]
+        new_x = relative_x * .5 + origin[0]
+        new_y = relative_y * .5 + origin[1]
+        circle_destinations[i] = pygame.Vector2(new_x, new_y)
+
+    # Adding 12 more circles to the game
+    for _ in range(3):
+        # one anywhere to the left of center
+        circle_positions.append(pygame.Vector2(random.randint(circle_radius, origin[0] * 0.5), random.randint(circle_radius, spawn_range_y)))
         circle_destinations.append(circle_positions[-1])
         circle_colors.append(random.choice(['red', 'blue', 'green']))
-    num_circles += 10
 
-    # Increase action_points by 5
-    action_points += 5
+        # one anywhere to the right of center
+        circle_positions.append(pygame.Vector2(random.randint(origin[0] * 1.5, spawn_range_x), random.randint(circle_radius, spawn_range_y)))
+        circle_destinations.append(circle_positions[-1])
+        circle_colors.append(random.choice(['red', 'blue', 'green']))
+
+        # One anywhere above center
+        circle_positions.append(pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, origin[1] * 0.5)))
+        circle_destinations.append(circle_positions[-1])
+        circle_colors.append(random.choice(['red', 'blue', 'green']))    
+
+        # One anywhere below center
+        circle_positions.append(pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(origin[1] * 1.5, spawn_range_y)))
+        circle_destinations.append(circle_positions[-1])
+        circle_colors.append(random.choice(['red', 'blue', 'green']))      
+    num_circles += 12
+
+    # Increase action_points by 6
+    action_points += 8
 
     # Stop music, play level-up, start new level music
     pygame.mixer.music.stop()
