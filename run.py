@@ -12,7 +12,7 @@ speed = 2000  # Speed of the circles
 is_playing_sound = False
 
 starting_action_points = 5
-num_circles = 5  # Circles on start
+init_circles = 5  # Circles on start
 circle_radius = 40  # Circle radius and minimum distance between circles
 
 screen = pygame.display.set_mode((screen_width, screen_height))
@@ -24,6 +24,7 @@ dt = 0
 game_state = "start_menu"
 game_over = False
 action_points = starting_action_points  # Set the desired number of action points
+num_circles = init_circles
 
 # Load on click sounds
 on_click_sounds = list()
@@ -74,13 +75,15 @@ def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
 
 def restart_game():
-    global circle_positions, circle_destinations, circle_colors, action_points, circle_scale
+    global circle_positions, circle_destinations, circle_colors, action_points, circle_scale, num_circles
+    num_circles = init_circles
     circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
     circle_destinations = list(circle_positions)
     circle_colors = [random.choice(['red', 'blue', 'green']) for _ in range(num_circles)]
     action_points = starting_action_points
     circle_scale = 1  # Reset circle_scale to 1
     min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
+
     
 def draw_start_screen():
     global is_playing_sound
@@ -132,21 +135,32 @@ def is_solved():
     return cluster_colors_match
 
 def level_up():
-    global circle_scale, level, level_music, level_up_music, is_playing_sound
+    global circle_scale, level, level_music, level_up_music, is_playing_sound, num_circles, circle_positions, circle_destinations, circle_colors, action_points
     circle_scale *= 0.5  # Set circle_scale to 0.5 if is_solved is True
     level += 1
+
+    # Adding 10 more circles to the game
+    for _ in range(10):
+        circle_positions.append(pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)))
+        circle_destinations.append(circle_positions[-1])
+        circle_colors.append(random.choice(['red', 'blue', 'green']))
+    num_circles += 10
+
+    # Increase action_points by 5
+    action_points += 5
 
     # Stop music, play level-up, start new level music
     pygame.mixer.music.stop()
     pygame.mixer.Sound.play(level_up_music)
     pygame.mixer.Sound.fadeout(level_up_music, 100)
     if level > 8:
-       pygame.mixer.music.load(level_music[9])
+        pygame.mixer.music.load(level_music[9])
     else:
-       pygame.mixer.music.load(level_music[level])
+        pygame.mixer.music.load(level_music[level])
 
     pygame.mixer.music.play(-1)
     is_playing_sound = True
+
 
 
 while running:
