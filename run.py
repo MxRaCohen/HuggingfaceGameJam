@@ -5,6 +5,7 @@ from sklearn.cluster import KMeans
 import math
 import shelve
 import numpy as np
+import matplotlib.pyplot as plt
 
 pygame.init()
 screen_height = 720
@@ -184,13 +185,37 @@ def draw_game_over_screen():
 
    pygame.display.update()
 
-def draw_easy_mode(kmeans_model):
-    global screen_width, screen_height, mesh_step
-    # Initialize background mesh
+easy_lines = list()
+def calculate_easy_mode(kmeans_model):
+    global screen_width, screen_height, mesh_step, easy_lines
+    # Initialize background mesh and predict
     xx, yy = np.meshgrid(np.arange(0, screen_width, mesh_step),
                          np.arange(0, screen_height, mesh_step))
     Z = kmeans_model.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
+
+    easy_colors = ['gold', 'violet', 'cyan']
+
+    # Contour over the mesh and extract coordinates
+    cs = plt.contour(xx, yy, Z)
+
+    lines = list()
+    for item in cs.collections:
+       for i in item.get_paths():
+          v = i.vertices
+          x = v[:, 0]
+          y = v[:, 1]
+          lines.append(list(zip([float(j) for j in x], [float(k) for k in y])))
+
+    easy_lines = lines
+
+
+def draw_easy_mode():
+    global easy_lines, screen
+
+    for i, line in enumerate(easy_lines):
+        pygame.draw.lines(screen, color='gold', closed=False, points=line)  
+
 
 
 def is_solved():
@@ -198,7 +223,7 @@ def is_solved():
     kmeans.fit([list(circle_positions[i]) for i in range(num_circles)])
 
     if easy_mode:
-        draw_easy_mode(kmeans)
+        calculate_easy_mode(kmeans)
 
     # Check if each cluster contains circles of the same color
     cluster_colors_match = True
@@ -282,7 +307,7 @@ def level_up():
     # Stop music, play level-up, start new level music
     pygame.mixer.music.stop()
     pygame.mixer.Sound.play(level_up_music)
-    pygame.mixer.Sound.fadeout(level_up_music, 100)
+    pygame.mixer.Sound.fadeout(level_up_music, 500)
     if level > 8:
         pygame.mixer.music.load(level_music[9])
     else:
@@ -359,6 +384,9 @@ while running:
         screen.fill("black")
 
         move_circles()
+
+        if easy_mode and easy_lines:
+            draw_easy_mode()
 
         # Draw all circles with their assigned colors
         for i in range(num_circles):
