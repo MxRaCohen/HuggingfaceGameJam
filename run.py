@@ -1,12 +1,16 @@
 # CURRENT WORKING VERSION 
 import pygame
 import random
-from sklearn.cluster import KMeans
 import shelve
 import math
-import shelve
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.cluster import BisectingKMeans
+from sklearn.cluster import OPTICS
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import SpectralClustering
+from sklearn.mixture import GaussianMixture
 
 pygame.init()
 screen_height = 720
@@ -18,6 +22,8 @@ is_playing_sound = False
 track_selected = False
 color_counts = {'red': 0, 'blue': 0, 'green': 0}
 sound_muted = False
+num_clusters = 3
+model_mode = 'KMeans'
 
 easy_mode = True
 mesh_step = 100
@@ -146,17 +152,30 @@ def circles_collide(circle1_pos, circle2_pos):
 def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
 
+def get_untrained_model():
+    global model_mode, num_clusters
+    if model_mode == 'KMeans':
+        return KMeans(n_clusters=num_clusters, n_init=10) 
+    elif model_mode == 'BisectingKMeans':
+        return BisectingKMeans(n_clusters=num_clusters)
+    elif model_mode == 'GaussianMixture':
+        return GaussianMixture(n_components=num_clusters)
+    elif model_mode == 'AgglomerativeClustering':
+        return AgglomerativeClustering(n_clusters=num_clusters)
+    elif model_mode == 'SpectralClustering':
+        return SpectralClustering(n_clusters=3)
+    elif model_mode == 'OPTICS':
+        return OPTICS(min_samples=1/num_clusters)
+
 # Initialize easy lines
 easy_lines = list()
-def calculate_easy_mode(kmeans_model):
+def calculate_easy_mode(trained_model):
     global screen_width, screen_height, mesh_step, easy_lines
     # Initialize background mesh and predict
     xx, yy = np.meshgrid(np.arange(0, screen_width, mesh_step),
                          np.arange(0, screen_height, mesh_step))
-    Z = kmeans_model.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = trained_model.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
-
-    easy_colors = ['gold', 'violet', 'cyan']
 
     # Contour over the mesh and extract coordinates
     cs = plt.contour(xx, yy, Z)
@@ -204,9 +223,18 @@ def draw_start_screen():
     title = font.render('Hugging Face Game Jam', True, (255, 255, 255))
     start_button = font.render('Start - Space', True, (255, 255, 255))
     hard_button = font.render('Hard Mode - h', True, (255, 255, 255))
+    options_button = font.render('Options - o', True, (255, 255, 255))
+    current_mode = font.render('Current Mode: {}'.format(model_mode), True, (255, 255, 255))
+
     screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/2))
     screen.blit(start_button, (screen_width/2 - start_button.get_width()/2, screen_height/2 + start_button.get_height()/2))
     screen.blit(hard_button, (screen_width/2 - hard_button.get_width()/2, screen_height/1.5 + hard_button.get_height()/2))
+    screen.blit(options_button, (10, screen_height - options_button.get_height()))
+    screen.blit(current_mode, (screen_width - current_mode.get_width(), screen_height - current_mode.get_height()))
+
+    if current_mode in ['AgglomerativeClustering', 'SpectralClustering', 'OPTICS']:
+        hard_mode_only = font.render('Warning! Hard Mode Only -'.format(model_mode), True, (255, 255, 255))
+        screen.blit(hard_mode_only, (screen_width - hard_mode_only.get_width(), screen_height - (5 + hard_mode_only.get_height() + current_mode.get_height())))
 
     if not is_playing_sound:
         pygame.mixer.music.load('sounds/start_menu.wav')
@@ -241,18 +269,36 @@ def draw_game_over_screen():
 
    pygame.display.update()
 
+# is_in_options = False
+# def draw_options_screen():
+#     global is_playing_sound, model_mode
+#     screen.fill((0, 0, 0))
+#     font = pygame.font.SysFont('arial', 40)
+#     current_mode = font.render('Current Mode: {}'.format(model_mode), True, (255, 255, 255))
+
+#     screen.blit(current_mode, (screen_width/2 - current_mode.get_width()/2, screen_height/5 - current_mode.get_height()/2))
+
+
+#     pygame.display.update()
+
+
 
 def is_solved():
-    kmeans = KMeans(n_clusters=3, n_init=10)  # Change the number of clusters as needed
-    kmeans.fit([list(circle_positions[i]) for i in range(num_circles)])
+    my_model = get_untrained_model()
+    my_model.fit([list(circle_positions[i]) for i in range(num_circles)])
 
-    if easy_mode:
-        calculate_easy_mode(kmeans)
+    if easy_mode and model_mode in ['KMeans', 'BisectingKMeans', 'GaussianMixture']:
+        calculate_easy_mode(my_model)
+
+    if model_mode == 'GaussianMixture':
+        my_labels = my_model.predict([list(circle_positions[i]) for i in range(num_circles)])
+    else:
+        my_labels = my_model.labels_
 
     # Check if each cluster contains circles of the same color
     cluster_colors_match = True
     for cluster_label in range(3):  # Assuming 3 clusters for this example
-        cluster_indices = [i for i in range(num_circles) if kmeans.labels_[i] == cluster_label]
+        cluster_indices = [i for i in range(num_circles) if my_labels[i] == cluster_label]
         cluster_colors_set = set([circle_colors[i] for i in cluster_indices])
         if len(cluster_colors_set) > 1:
             cluster_colors_match = False
@@ -352,7 +398,33 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        elif event.type == pygame.MOUSEBUTTONDOWN:
+        # TODO: Figure out options Menu
+        # if event == pygame.KEYDOWN:
+        #     if game_state in ['start_menu', 'options_menu']:
+        #         if event.key == pygame.K_o:
+        #             game_state == 'options_menu'
+        #             draw_options_screen()
+
+        #         elif event.key == pygame.K_1 or event.key == pygame.K_KP1:
+        #             model_mode = 'KMeans'
+        #         elif event.key == pygame.K_2 or event.key == pygame.K_KP2:
+        #             model_mode = 'BisectingKMeans'
+        #         elif event.key == pygame.K_3 or event.key == pygame.K_KP3:
+        #             model_mode = 'GaussianMixture'
+        #         elif event.key == pygame.K_4 or event.key == pygame.K_KP4:
+        #             model_mode = 'AgglomerativeClustering'
+        #         elif event.key == pygame.K_5 or event.key == pygame.K_KP5:
+        #             model_mode = 'SpectralClustering'
+        #         elif event.key == pygame.K_6 or event.key == pygame.K_KP6:
+        #             model_mode = 'OPTICS'
+
+        # if event == pygame.KEYUP:
+        #     if game_state in ['start_menu', 'options_menu']:
+        #         if event.key == pygame.K_o:
+        #             game_state == 'start_menu'
+        #             draw_start_screen()
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
             click_pos = pygame.Vector2(pygame.mouse.get_pos())
             if mute_button_pos.collidepoint(click_pos.x, click_pos.y):
                 mute_unmute_sound()
@@ -386,12 +458,30 @@ while running:
                 )
                 circle_destinations[current_circle] = constrained_pos
 
+
     if game_state == "start_menu":
         draw_start_screen()
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
             easy_mode = True
         elif keys[pygame.K_h]:
+            easy_mode = False
+            
+
+        if keys[pygame.K_1] or keys[pygame.K_KP1]:
+            model_mode = 'KMeans'
+        elif keys[pygame.K_2] or keys[pygame.K_KP2]:
+            model_mode = 'BisectingKMeans'
+        elif keys[pygame.K_3] or keys[pygame.K_KP3]:
+            model_mode = 'GaussianMixture'
+        elif keys[pygame.K_4] or keys[pygame.K_KP4]:
+            model_mode = 'AgglomerativeClustering'
+            easy_mode = False
+        elif keys[pygame.K_5] or keys[pygame.K_KP5]:
+            model_mode = 'SpectralClustering'
+            easy_mode = False
+        elif keys[pygame.K_6] or keys[pygame.K_KP6]:
+            model_mode = 'OPTICS'
             easy_mode = False
 
         if keys[pygame.K_h] or keys[pygame.K_SPACE]:
@@ -402,6 +492,10 @@ while running:
             is_playing_sound = True
             restart_game()
             game_over = False
+
+    if game_state == 'options_menu':
+        draw_options_screen()
+
 
     if game_over:
         draw_game_over_screen()
