@@ -146,8 +146,41 @@ def circles_collide(circle1_pos, circle2_pos):
 def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
 
+# Initialize easy lines
+easy_lines = list()
+def calculate_easy_mode(kmeans_model):
+    global screen_width, screen_height, mesh_step, easy_lines
+    # Initialize background mesh and predict
+    xx, yy = np.meshgrid(np.arange(0, screen_width, mesh_step),
+                         np.arange(0, screen_height, mesh_step))
+    Z = kmeans_model.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+    easy_colors = ['gold', 'violet', 'cyan']
+
+    # Contour over the mesh and extract coordinates
+    cs = plt.contour(xx, yy, Z)
+
+    lines = list()
+    for item in cs.collections:
+       for i in item.get_paths():
+          v = i.vertices
+          x = v[:, 0]
+          y = v[:, 1]
+          lines.append(list(zip([float(j) for j in x], [float(k) for k in y])))
+
+    easy_lines = lines
+
+
+def draw_easy_mode():
+    global easy_lines, screen
+
+    for i, line in enumerate(easy_lines):
+        pygame.draw.lines(screen, color='gold', closed=False, points=line)  
+
+
 def restart_game():
-    global circle_positions, circle_destinations, circle_colors, action_points, circle_scale, num_circles, score, spawn_range_x, spawn_range_y
+    global circle_positions, circle_destinations, circle_colors, action_points, circle_scale, num_circles, score, easy_lines
     num_circles = init_circles
     circle_positions = [pygame.Vector2(random.randint(circle_radius, spawn_range_x), random.randint(circle_radius, spawn_range_y)) for _ in range(num_circles)]
     circle_destinations = list(circle_positions)
@@ -155,8 +188,7 @@ def restart_game():
     action_points = starting_action_points
     score = 0
     circle_scale = 1  # Reset circle_scale to 1
-    spawn_range_x = screen.get_width() - circle_radius * 2
-    spawn_range_y = screen.get_height() - circle_radius * 2
+    easy_lines = list()
     min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
 
     
@@ -165,10 +197,12 @@ def draw_start_screen():
     screen.fill((0, 0, 0))
     font = pygame.font.SysFont('arial', 40)
     title = font.render('Hugging Face Game Jam', True, (255, 255, 255))
-    start_button = font.render('Press Space to Start', True, (255, 255, 255))
+    start_button = font.render('Start - Space', True, (255, 255, 255))
+    hard_button = font.render('Hard Mode - h', True, (255, 255, 255))
     screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/2))
     screen.blit(start_button, (screen_width/2 - start_button.get_width()/2, screen_height/2 + start_button.get_height()/2))
-    
+    screen.blit(hard_button, (screen_width/2 - hard_button.get_width()/2, screen_height/1.5 + hard_button.get_height()/2))
+
     if not is_playing_sound:
         pygame.mixer.music.load('sounds/start_menu.wav')
         pygame.mixer.music.play(-1)
@@ -201,38 +235,6 @@ def draw_game_over_screen():
        is_playing_sound = True
 
    pygame.display.update()
-
-easy_lines = list()
-def calculate_easy_mode(kmeans_model):
-    global screen_width, screen_height, mesh_step, easy_lines
-    # Initialize background mesh and predict
-    xx, yy = np.meshgrid(np.arange(0, screen_width, mesh_step),
-                         np.arange(0, screen_height, mesh_step))
-    Z = kmeans_model.predict(np.c_[xx.ravel(), yy.ravel()])
-    Z = Z.reshape(xx.shape)
-
-    easy_colors = ['gold', 'violet', 'cyan']
-
-    # Contour over the mesh and extract coordinates
-    cs = plt.contour(xx, yy, Z)
-
-    lines = list()
-    for item in cs.collections:
-       for i in item.get_paths():
-          v = i.vertices
-          x = v[:, 0]
-          y = v[:, 1]
-          lines.append(list(zip([float(j) for j in x], [float(k) for k in y])))
-
-    easy_lines = lines
-
-
-def draw_easy_mode():
-    global easy_lines, screen
-
-    for i, line in enumerate(easy_lines):
-        pygame.draw.lines(screen, color='gold', closed=False, points=line)  
-
 
 
 def is_solved():
@@ -383,6 +385,11 @@ while running:
         draw_start_screen()
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
+            easy_mode = True
+        elif keys[pygame.K_h]:
+            easy_mode = False
+
+        if keys[pygame.K_h] or keys[pygame.K_SPACE]:
             game_state = "game"
             pygame.mixer.music.stop()
             pygame.mixer.music.load(level_music[0])
