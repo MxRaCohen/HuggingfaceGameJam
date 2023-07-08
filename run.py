@@ -482,7 +482,7 @@ while running:
         draw_options_screen()
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_o]:
+        if keys[pygame.K_x]:
             is_in_options = False
             pass
 
