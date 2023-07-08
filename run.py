@@ -2,6 +2,7 @@
 import pygame
 import random
 from sklearn.cluster import KMeans
+import shelve
 
 pygame.init()
 screen_height = 720
@@ -27,6 +28,35 @@ game_over = False
 action_points = starting_action_points  # Set the desired number of action points
 num_circles = init_circles
 score = 0
+
+def get_high_scores():
+    try:
+        f = shelve.open('high_scores.txt')
+        scores = f['scores']
+        scores.sort()
+        while len(scores) < 5:
+            scores.append(0)
+        f.close()
+        return scores 
+    except:
+        return [0] * 5
+
+def write_high_score(new_score):
+    f = shelve.open('high_scores.txt')
+    try:
+        old_scores = f['scores']
+        old_scores.append(new_score)
+        old_scores.sort(reverse=True)
+        new_scores = old_scores[0:5]
+    except:
+        new_scores = [new_score, 0, 0, 0, 0]
+
+    f['scores'] = new_scores
+    f.close()
+    if new_score in new_scores:
+        return True
+    return False
+
 
 # Load on click sounds
 on_click_sounds = list()
@@ -107,15 +137,23 @@ def draw_start_screen():
     pygame.display.update()
 
 def draw_game_over_screen():
-   global is_playing_sound
+   global is_playing_sound, score
    screen.fill((0, 0, 0))
    font = pygame.font.SysFont('arial', 40)
    title = font.render('Game Over', True, (255, 255, 255))
    restart_button = font.render('R - Restart', True, (255, 255, 255))
    quit_button = font.render('Q - Quit', True, (255, 255, 255))
-   screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/2 - title.get_height()/3))
-   screen.blit(restart_button, (screen_width/2 - restart_button.get_width()/2, screen_height/1.9 + restart_button.get_height()))
-   screen.blit(quit_button, (screen_width/2 - quit_button.get_width()/2, screen_height/2 + quit_button.get_height()/2))
+   screen.blit(title, (screen_width/2 - title.get_width()/2, screen_height/10 - title.get_height()/3))
+   screen.blit(restart_button, (screen_width/2 - restart_button.get_width()/2, screen_height/10 + restart_button.get_height()))
+   screen.blit(quit_button, (screen_width/2 - quit_button.get_width()/2, screen_height/10 + quit_button.get_height()/2))
+
+   old_scores = get_high_scores()
+   if write_high_score(score):
+       new_high_score = font.render('New high score!', True, (255, 255, 255))
+       screen.blit(new_high_score, (screen_width/2 - new_high_score.get_width()/2, screen_height/5 + new_high_score.get_height()/2))
+
+   your_score = font.render('Score: {}'.format(score), True, (255, 255, 255))
+   screen.blit(your_score, (screen_width/2 - your_score.get_width()/2, screen_height/2 + your_score.get_height()/2))
 
    if not is_playing_sound:
        pygame.mixer.music.load('sounds/end_game.wav')
