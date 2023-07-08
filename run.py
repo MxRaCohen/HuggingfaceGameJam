@@ -139,6 +139,24 @@ def is_solved():
 
     return cluster_colors_match
 
+def move_circles():
+    global num_circles, circle_positions, circle_destinations, dt
+    # Move all circles towards their destinations
+    for i in range(num_circles):
+        if circle_positions[i] != circle_destinations[i]:
+            direction = (circle_destinations[i] - circle_positions[i]).normalize()
+            if (circle_destinations[i] - circle_positions[i]).length() <= speed * dt:
+                circle_positions[i] = circle_destinations[i]
+            else:
+                circle_positions[i] += direction * speed * dt
+
+        # Check for collisions with other circles
+        for j in range(num_circles):
+            if i != j and circles_collide(circle_positions[i], circle_positions[j]):
+                # Adjust the position of circle i if it collides with circle j
+                displacement = (circle_positions[i] - circle_positions[j]).normalize() * min_distance
+                circle_positions[i] = circle_positions[j] + displacement
+
 def level_up():
     global circle_scale, level, level_music, level_up_music, is_playing_sound, num_circles, circle_positions, circle_destinations, circle_colors, action_points, score
 
@@ -156,6 +174,8 @@ def level_up():
         new_x = relative_x * .5 + origin[0]
         new_y = relative_y * .5 + origin[1]
         circle_destinations[i] = pygame.Vector2(new_x, new_y)
+
+    move_circles()
 
     # Adding 12 more circles to the game
     for _ in range(3):
@@ -262,21 +282,7 @@ while running:
 
         screen.fill("black")
 
-        # Move all circles towards their destinations
-        for i in range(num_circles):
-            if circle_positions[i] != circle_destinations[i]:
-                direction = (circle_destinations[i] - circle_positions[i]).normalize()
-                if (circle_destinations[i] - circle_positions[i]).length() <= speed * dt:
-                    circle_positions[i] = circle_destinations[i]
-                else:
-                    circle_positions[i] += direction * speed * dt
-
-            # Check for collisions with other circles
-            for j in range(num_circles):
-                if i != j and circles_collide(circle_positions[i], circle_positions[j]):
-                    # Adjust the position of circle i if it collides with circle j
-                    displacement = (circle_positions[i] - circle_positions[j]).normalize() * min_distance
-                    circle_positions[i] = circle_positions[j] + displacement
+        move_circles()
 
         # Draw all circles with their assigned colors
         for i in range(num_circles):
