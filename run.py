@@ -87,18 +87,34 @@ level_up_music = pygame.mixer.Sound("sounds/level_up.wav")
 
 # Load level music
 level_music = {
-    0 : 'sounds/levels/WheresMySpaceship.wav',
-    1 : 'sounds/levels/SpaceTheme.wav',
-    2 : 'sounds/levels/FallingStars.wav',
-    3 : 'sounds/levels/ThroughSpace.wav',
-    4 : 'sounds/levels/Planetrise.wav',
-    5 : 'sounds/levels/FrozenJam.wav',
-    6 : 'sounds/levels/SpaceSprinkles.mp3',
-    7 : 'sounds/levels/TowerDefenseTheme.mp3',
-    8 : 'sounds/levels/HangInThere.mp3',
-    9 : 'sounds/levels/MagicSpace.mp3',
+    'easy' : {
+        0 : 'sounds/levels/Planetrise.wav',
+        1 : 'sounds/levels/FallingStars.wav',
+        2 : 'sounds/levels/SpaceSprinkles.mp3',
+        3 : 'sounds/levels/MagicSpace.mp3',
+        4 : 'sounds/levels/FrozenJam.wav',
+    },
+    'hard' : {
+        0 : 'sounds/levels/ThroughSpace.wav',
+        1 : 'sounds/levels/TowerDefenseTheme.mp3',
+        2 : 'sounds/levels/WheresMySpaceship.wav',
+        3 : 'sounds/levels/SpaceTheme.wav',
+        4 : 'sounds/levels/HangInThere.mp3',
+    }
 }
 
+def get_level_music():
+    global level, easy_mode, level_music
+    if easy_mode:
+        if level < 5:
+            return level_music['easy'][level]
+        else:
+            return level_music['easy'][4]
+    else:
+        if level < 5:
+            return level_music['hard'][level]
+        else:
+            return level_music['hard'][4]
 
 # Load mute/unmute button icons
 mute_button_img = pygame.image.load('icons/mute_button.jpg')
@@ -215,7 +231,7 @@ def restart_game():
     easy_lines = list()
     min_distance = circle_radius * 2  # Twice the radius to prevent overlapping
     level = 0
-    pygame.mixer.music.load(level_music[level])
+    pygame.mixer.music.load(get_level_music())
 
     pygame.mixer.music.play(-1)
     is_playing_sound = False
@@ -225,14 +241,12 @@ def draw_start_screen():
     global is_playing_sound, start_menu_img
     screen.fill((0, 0, 0))
     font = pygame.font.SysFont('lucidaconsole', 40)
-    current_mode = font.render('Current Mode: {}'.format(model_mode), True, (0, 0, 0))
+    current_mode = font.render('{}'.format(model_mode), True, (0, 0, 0))
+    hard_mode_render = font.render('Normal' if easy_mode else 'Hard', True, (0, 0, 0) if easy_mode else (255, 0, 0))
 
     screen.blit(start_menu_img, (0, 0))
     screen.blit(current_mode, (screen_width - current_mode.get_width(), screen_height - current_mode.get_height()))
-
-    if current_mode in ['AgglomerativeClustering', 'SpectralClustering', 'OPTICS']:
-        hard_mode_only = font.render('Warning! Hard Mode Only -'.format(model_mode), True, (255, 255, 255))
-        screen.blit(hard_mode_only, (screen_width - hard_mode_only.get_width(), screen_height - (5 + hard_mode_only.get_height() + current_mode.get_height())))
+    screen.blit(hard_mode_render, (screen_width - hard_mode_render.get_width(), screen_height - current_mode.get_height() - hard_mode_render.get_height() - 5))
 
     if not is_playing_sound:
         pygame.mixer.music.load('sounds/start_menu.wav')
@@ -376,17 +390,16 @@ def level_up():
     num_circles += 12
 
 
-    # Increase action_points by 6
+    # Increase action_points by 8
     action_points += 8
 
     # Stop music, play level-up, start new level music
     pygame.mixer.music.stop()
     pygame.mixer.Sound.play(level_up_music)
     pygame.mixer.Sound.fadeout(level_up_music, 500)
-    if level > 8:
-        pygame.mixer.music.load(level_music[9])
-    else:
-        pygame.mixer.music.load(level_music[level])
+
+    new_music_file = get_level_music()
+    pygame.mixer.music.load(new_music_file)
 
     is_solved()
     draw_easy_mode()
@@ -426,9 +439,10 @@ while running:
             dragging = False
             if current_circle != last_circle and action_points > 0:
                 action_points -= 1
+            
 
-                if is_solved():
-                    level_up()
+            if is_solved():
+                level_up()
 
         elif event.type == pygame.MOUSEMOTION:
             if dragging and current_circle is not None:
@@ -453,14 +467,21 @@ while running:
         if keys[pygame.K_o]:
             is_in_options = True
             pass
-            
+
+        if keys[pygame.K_h]:
+            easy_mode = False
+        elif keys[pygame.K_n]:
+            easy_mode = True
 
         if keys[pygame.K_1] or keys[pygame.K_KP1]:
             model_mode = 'KMeans'
+            easy_mode = True
         elif keys[pygame.K_2] or keys[pygame.K_KP2]:
             model_mode = 'BisectingKMeans'
+            easy_mode = True
         elif keys[pygame.K_3] or keys[pygame.K_KP3]:
             model_mode = 'GaussianMixture'
+            easy_mode = True
         elif keys[pygame.K_4] or keys[pygame.K_KP4]:
             model_mode = 'AgglomerativeClustering'
             easy_mode = False
@@ -471,10 +492,11 @@ while running:
             model_mode = 'OPTICS'
             easy_mode = False
 
-        if keys[pygame.K_h] or keys[pygame.K_SPACE]:
+
+        if  keys[pygame.K_SPACE]:
             game_state = "game"
             pygame.mixer.music.stop()
-            pygame.mixer.music.load(level_music[0])
+            pygame.mixer.music.load(get_level_music())
             pygame.mixer.music.play(-1)
             is_playing_sound = True
             restart_game()
