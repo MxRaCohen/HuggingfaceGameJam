@@ -3,6 +3,8 @@ import pygame
 import random
 from sklearn.cluster import KMeans
 import math
+import shelve
+import numpy as np
 
 pygame.init()
 screen_height = 720
@@ -13,6 +15,10 @@ speed = 2000  # Speed of the circles
 is_playing_sound = False
 track_selected = False
 color_counts = {'red': 0, 'blue': 0, 'green': 0}
+
+easy_mode = True
+mesh_step = 100
+
 
 starting_action_points = 5
 init_circles = 5  # Circles on start
@@ -29,6 +35,37 @@ game_over = False
 action_points = starting_action_points  # Set the desired number of action points
 num_circles = init_circles
 score = 0
+
+
+def get_high_scores():
+    try:
+        f = shelve.open('high_scores.txt')
+        scores = f['scores']
+        scores.sort()
+        while len(scores) < 5:
+            scores.append(0)
+        f.close()
+        return scores 
+    except:
+        return [0] * 5
+
+def write_high_score(new_score):
+    f = shelve.open('high_scores.txt')
+    try:
+        old_scores = f['scores']
+        if new_score not in old_scores:
+            old_scores.append(new_score)
+        old_scores.sort(reverse=True)
+        new_scores = old_scores[0:5]
+    except:
+        new_scores = [new_score, 0, 0, 0, 0]
+
+    f['scores'] = new_scores
+    f.close()
+    if new_score in new_scores:
+        return True
+    return False
+
 
 # Load on click sounds
 on_click_sounds = list()
@@ -51,6 +88,7 @@ level_music = {
     8 : 'sounds/levels/HangInThere.mp3',
     9 : 'sounds/levels/MagicSpace.mp3',
 }
+
 
 # Twice the radius to prevent overlapping
 min_distance = circle_radius * 2  
@@ -146,9 +184,21 @@ def draw_game_over_screen():
 
    pygame.display.update()
 
+def draw_easy_mode(kmeans_model):
+    global screen_width, screen_height, mesh_step
+    # Initialize background mesh
+    xx, yy = np.meshgrid(np.arange(0, screen_width, mesh_step),
+                         np.arange(0, screen_height, mesh_step))
+    Z = kmeans_model.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+
 def is_solved():
     kmeans = KMeans(n_clusters=3, n_init=10)  # Change the number of clusters as needed
     kmeans.fit([list(circle_positions[i]) for i in range(num_circles)])
+
+    if easy_mode:
+        draw_easy_mode(kmeans)
 
     # Check if each cluster contains circles of the same color
     cluster_colors_match = True
