@@ -403,32 +403,6 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        # TODO: Figure out options Menu
-        # if event == pygame.KEYDOWN:
-        #     if game_state in ['start_menu', 'options_menu']:
-        #         if event.key == pygame.K_o:
-        #             game_state == 'options_menu'
-        #             draw_options_screen()
-
-        #         elif event.key == pygame.K_1 or event.key == pygame.K_KP1:
-        #             model_mode = 'KMeans'
-        #         elif event.key == pygame.K_2 or event.key == pygame.K_KP2:
-        #             model_mode = 'BisectingKMeans'
-        #         elif event.key == pygame.K_3 or event.key == pygame.K_KP3:
-        #             model_mode = 'GaussianMixture'
-        #         elif event.key == pygame.K_4 or event.key == pygame.K_KP4:
-        #             model_mode = 'AgglomerativeClustering'
-        #         elif event.key == pygame.K_5 or event.key == pygame.K_KP5:
-        #             model_mode = 'SpectralClustering'
-        #         elif event.key == pygame.K_6 or event.key == pygame.K_KP6:
-        #             model_mode = 'OPTICS'
-
-        # if event == pygame.KEYUP:
-        #     if game_state in ['start_menu', 'options_menu']:
-        #         if event.key == pygame.K_o:
-        #             game_state == 'start_menu'
-        #             draw_start_screen()
-
         if event.type == pygame.MOUSEBUTTONDOWN:
             click_pos = pygame.Vector2(pygame.mouse.get_pos())
             if mute_button_pos.collidepoint(click_pos.x, click_pos.y):
