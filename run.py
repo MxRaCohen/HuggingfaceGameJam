@@ -119,7 +119,23 @@ def get_level_music(level=level):
             return level_music['hard'][level]
         else:
             return level_music['hard'][4]
+        
+tutorial_slides = {
+    0: 'icons/Tutorial/Tutorial_1.jpg',
+    1: 'icons/Tutorial/Tutorial_2.jpg',
+    2: 'icons/Tutorial/Tutorial_3.jpg',
+    3: 'icons/Tutorial/Tutorial_4.jpg',
+    4: 'icons/Tutorial/Tutorial_5.jpg',
+    5: 'icons/Tutorial/Tutorial_6.jpg',
+    6: 'icons/Tutorial/Tutorial_7.jpg',
+    7: 'icons/Tutorial/Tutorial_8.jpg',
+    8: 'icons/Tutorial/Tutorial_9.jpg',
+}
 
+# Load tutorial slides
+tutorial_images = [pygame.image.load(slide) for slide in tutorial_slides.values()]
+        
+        
 # Load mute/unmute button icons
 mute_button_img = pygame.image.load('icons/mute_button.jpg')
 unmute_button_img = pygame.image.load('icons/unmute_button.jpg')
@@ -421,13 +437,31 @@ def mute_unmute_sound():
     sound_muted = not sound_muted
     pygame.mixer.music.set_volume(0 if sound_muted else 1)
 
+def draw_tutorial_screen():
+    screen.fill("black")
+    screen.blit(tutorial_images[current_tutorial_slide], (0, 0))
+    pygame.display.flip()
+    
+def handle_tutorial_event(event):
+    global game_state, current_tutorial_slide
+    if event.type == pygame.MOUSEBUTTONDOWN:
+        current_tutorial_slide += 1
+        if current_tutorial_slide >= len(tutorial_images):
+            game_state = "start_menu"
+            current_tutorial_slide = 0
+
 while running:
     mute_button_pos = pygame.Rect(20, 650, 40, 40)
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
+        
+        if game_state == "tutorial":
+            handle_tutorial_event(event)
+            draw_tutorial_screen()
+            continue
+        
         if event.type == pygame.MOUSEBUTTONDOWN:
             click_pos = pygame.Vector2(pygame.mouse.get_pos())
             if mute_button_pos.collidepoint(click_pos.x, click_pos.y):
@@ -506,6 +540,11 @@ while running:
             pygame.mixer.music.load(get_level_music())
             pygame.mixer.music.play(-1)
             is_playing_sound = True
+            restart_game()
+            game_over = False
+            
+        if keys[pygame.K_t]: #  tutorial
+            game_state = "tutorial"
             restart_game()
             game_over = False
 
