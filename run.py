@@ -27,6 +27,7 @@ model_mode = 'KMeans'
 
 easy_mode = True
 mesh_step = 100
+current_tutorial_slide = 0
 
 starting_action_points = 5
 init_circles = 5  # Circles on start
