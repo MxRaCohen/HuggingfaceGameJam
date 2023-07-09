@@ -1,6 +1,13 @@
 # HuggingfaceGameJam
 Our entry into the [Hugging Face Game Jam](https://huggingface.co/blog/game-jam). 
 
+## Table of Contents
+- [HuggingfaceGameJam](#huggingfacegamejam)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Running the Game](#running-the-game)
+- [Music Credits](#music-credits)
+
 ## Getting Started
 
 Before you can play the game, you need to set up the environment. The game is written in Python and uses the Pygame library. 
@@ -8,10 +15,22 @@ Before you can play the game, you need to set up the environment. The game is wr
 ### Prerequisites
 Ensure you have Python installed on your system. If not, download and install Python from the [official website](https://www.python.org/downloads/).
 
-You will also need Pygame, a set of Python modules designed for writing video games. If you don't have Pygame installed, you can install it using pip, the Python package installer:
+Next, you will need to install several Python libraries which our game depends on. These libraries include Pygame, NumPy, Matplotlib, scikit-learn, and several others. You can install these libraries using pip, the Python package installer. You might want to do this in a virtual environment to avoid conflicts with other Python projects.
+
+You can create a virtual environment and install the required libraries using the following commands:
 
 ```bash
-pip install pygame
+# Create a virtual environment named 'env'
+python -m venv env
+
+# Activate the virtual environment
+# On Windows
+env\Scripts\activate
+# On Unix or MacOS
+source env/bin/activate
+
+# Install the required libraries
+pip install pygame numpy matplotlib scikit-learn
 ```
 
 ### Running the Game
